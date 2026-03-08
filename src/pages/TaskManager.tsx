@@ -379,10 +379,13 @@ function TaskDialog({
   const blank: Task = {
     id: '', title: '', description: '', moduleTag: 'General', priority: 'Medium',
     status: 'Not Started', owner: settings.userName, dueDate: '', subtasks: [],
-    notes: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
+    notes: [], attachments: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
     recurrence: 'none', recurrenceEndDate: '',
   };
   const [form, setForm] = useState<Task>(blank);
+  const [newNote, setNewNote] = useState('');
+  const [newAttachmentName, setNewAttachmentName] = useState('');
+  const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
 
   useEffect(() => { setForm(task || blank); }, [task, settings.userName]);
 
