@@ -15,6 +15,9 @@ export interface Task {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  recurrence?: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurrenceEndDate?: string;
+  parentTaskId?: string;
 }
 
 export interface CalendarEvent {
