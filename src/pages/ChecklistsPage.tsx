@@ -344,6 +344,41 @@ export default function ChecklistsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={templateView} onOpenChange={setTemplateView}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Choose a Template</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {TEMPLATES.map(t => (
+              <button
+                key={t.title}
+                onClick={() => applyTemplate(t)}
+                className="text-left p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+                  <span className="font-medium text-sm text-foreground">{t.title}</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{t.items.length} items</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{t.description}</p>
+                <ul className="space-y-0.5">
+                  {t.items.slice(0, 3).map(item => (
+                    <li key={item} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Circle className="w-2.5 h-2.5 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                  {t.items.length > 3 && (
+                    <li className="text-[10px] text-muted-foreground pl-4">+{t.items.length - 3} more</li>
+                  )}
+                </ul>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
