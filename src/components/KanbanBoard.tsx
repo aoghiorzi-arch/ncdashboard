@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export interface KanbanCard {
   id: string;
