@@ -61,6 +61,16 @@ export default function InstructorCRM() {
     setEditItem(null);
   };
 
+  const handleKanbanMove = (itemId: string, newStatus: string) => {
+    const item = instructors.find(i => i.id === itemId);
+    if (item) {
+      const now = new Date().toISOString();
+      instructorCRUD.update({ ...item, status: newStatus, updatedAt: now });
+      logActivity('updated', 'Instructors', `${item.fullName} → ${newStatus}`, getSettings().userName);
+      setInstructors(instructorCRUD.getAll());
+    }
+  };
+
   const handleExport = () => exportToCSV(instructors, 'instructors', [
     { key: 'fullName', label: 'Name' }, { key: 'status', label: 'Status' },
     { key: 'specialism', label: 'Specialism' }, { key: 'email', label: 'Email' },
