@@ -61,7 +61,7 @@ const App = () => (
           <Route path="/portal" element={<StakeholderPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
