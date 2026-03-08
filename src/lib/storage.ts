@@ -300,6 +300,56 @@ function createCRUD<T extends { id: string }>(key: string) {
 export const getTasks = (): Task[] => getStore('nc_tasks', []);
 export const saveTasks = (tasks: Task[]) => { setStore('nc_tasks', tasks); notify(); };
 
+// Recurring Task Generation
+export function generateRecurringTasks(): void {
+  const tasks = getTasks();
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const newTasks: Task[] = [];
+
+  tasks.forEach(task => {
+    if (!task.recurrence || task.recurrence === 'none' || !task.dueDate) return;
+    if (task.status !== 'Complete') return;
+    if (task.recurrenceEndDate && task.recurrenceEndDate < todayStr) return;
+
+    // Check if a future instance already exists
+    const hasUpcoming = tasks.some(t =>
+      t.parentTaskId === task.id && t.status !== 'Complete' && t.dueDate >= todayStr
+    );
+    if (hasUpcoming) return;
+
+    const lastDue = new Date(task.dueDate);
+    let nextDue: Date;
+
+    switch (task.recurrence) {
+      case 'daily': nextDue = new Date(lastDue); nextDue.setDate(nextDue.getDate() + 1); break;
+      case 'weekly': nextDue = new Date(lastDue); nextDue.setDate(nextDue.getDate() + 7); break;
+      case 'biweekly': nextDue = new Date(lastDue); nextDue.setDate(nextDue.getDate() + 14); break;
+      case 'monthly': nextDue = new Date(lastDue); nextDue.setMonth(nextDue.getMonth() + 1); break;
+      default: return;
+    }
+
+    if (task.recurrenceEndDate && nextDue.toISOString().split('T')[0] > task.recurrenceEndDate) return;
+
+    const newTask: Task = {
+      ...task,
+      id: generateId(),
+      status: 'Not Started',
+      dueDate: nextDue.toISOString().split('T')[0],
+      parentTaskId: task.id,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      subtasks: task.subtasks.map(s => ({ ...s, done: false })),
+      notes: [],
+    };
+    newTasks.push(newTask);
+  });
+
+  if (newTasks.length > 0) {
+    saveTasks([...tasks, ...newTasks]);
+  }
+}
+
 // All module CRUDs
 export const calendarCRUD = createCRUD<CalendarEvent>('nc_calendar');
 export const classCRUD = createCRUD<ClassRecord>('nc_classes');
