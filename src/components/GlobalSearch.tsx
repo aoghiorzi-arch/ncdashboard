@@ -26,7 +26,7 @@ export function GlobalSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const navigate = useNavigate();
 
-  // Cmd+K listener
+  // Cmd+K listener + custom event for button trigger
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -34,8 +34,13 @@ export function GlobalSearch() {
         setOpen(o => !o);
       }
     };
+    const toggle = () => setOpen(o => !o);
     document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
+    window.addEventListener('nc-open-search', toggle);
+    return () => {
+      document.removeEventListener('keydown', down);
+      window.removeEventListener('nc-open-search', toggle);
+    };
   }, []);
 
   const search = useCallback((query: string) => {
