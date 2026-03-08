@@ -128,29 +128,22 @@ export function KanbanBoard<T extends KanbanCard>({
             )}
 
             <div className="space-y-2">
-              <AnimatePresence mode="popLayout">
-                {col.map(item => (
-                  <motion.div
+              {col.map(item => (
+                  <div
                     key={item.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: draggedId === item.id ? 0.4 : 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
                     draggable
                     onDragStart={e => handleDragStart(e, item.id)}
                     onDragEnd={handleDragEnd}
                     onClick={() => onCardClick(item)}
                     className={cn(
-                      'bg-card rounded-md p-3 nc-shadow-card cursor-grab hover:nc-shadow-elevated transition-shadow',
+                      'bg-card rounded-md p-3 nc-shadow-card cursor-grab hover:nc-shadow-elevated transition-all duration-150',
                       'active:cursor-grabbing active:scale-[0.98]',
-                      draggedId === item.id && 'ring-2 ring-accent/30'
+                      draggedId === item.id && 'opacity-40 ring-2 ring-accent/30'
                     )}
                   >
                     {renderCard(item)}
-                  </motion.div>
+                  </div>
                 ))}
-              </AnimatePresence>
             </div>
 
             {/* Bottom drop indicator */}
