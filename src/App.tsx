@@ -18,6 +18,7 @@ import PlatformMetrics from "./pages/PlatformMetrics";
 import LegalCompliance from "./pages/LegalCompliance";
 import TeamRoles from "./pages/TeamRoles";
 import SettingsModule from "./pages/SettingsModule";
+import AuditTrail from "./pages/AuditTrail";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
