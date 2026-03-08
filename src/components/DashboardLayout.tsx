@@ -123,13 +123,14 @@ export function DashboardLayout() {
         <header className="h-14 flex items-center justify-between px-6 bg-card border-b shrink-0">
           <h2 className="font-semibold text-lg text-foreground">{currentModule}</h2>
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground">
+            <button
+              onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+              className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground flex items-center gap-2"
+            >
               <Search className="w-4 h-4" />
+              <span className="text-xs hidden sm:inline">⌘K</span>
             </button>
-            <button className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent" />
-            </button>
+            <NotificationsPanel />
           </div>
         </header>
 
