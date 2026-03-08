@@ -24,6 +24,7 @@ import ChecklistsPage from "./pages/ChecklistsPage";
 import ForecastingPage from "./pages/ForecastingPage";
 import GanttPage from "./pages/GanttPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
+import StakeholderPortal from "./pages/StakeholderPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/workflows" element={<WorkflowsPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/portal" element={<StakeholderPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
