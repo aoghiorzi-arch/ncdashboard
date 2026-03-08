@@ -134,44 +134,36 @@ export default function ClassesPipeline() {
           }
         />
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {STAGES.map(stage => {
-            const col = classes.filter(c => c.pipelineStage === stage);
+        <KanbanBoard<ClassRecord & KanbanCard>
+          columns={STAGES}
+          columnColors={stageColors}
+          items={classes.map(c => ({ ...c, column: c.pipelineStage }))}
+          onMove={handleKanbanMove}
+          onCardClick={c => setEditClass(c)}
+          renderCard={c => {
+            const epProgress = c.episodeCountTarget > 0
+              ? Math.round((c.episodeCountDelivered / c.episodeCountTarget) * 100)
+              : 0;
             return (
-              <div key={stage} className={cn('rounded-lg p-3 min-w-[200px] min-h-[250px] border flex-shrink-0', stageColors[stage])}>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{stage}</h4>
-                  <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
+              <>
+                <p className="text-sm font-medium text-foreground mb-1">{c.title}</p>
+                <p className="text-[10px] text-muted-foreground mb-2">{c.instructorName || 'No instructor'}</p>
+                {c.episodeCountTarget > 0 && (
+                  <div className="mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[9px] text-muted-foreground">Episodes</span>
+                      <span className="text-[9px] text-muted-foreground">{c.episodeCountDelivered}/{c.episodeCountTarget}</span>
+                    </div>
+                    <Progress value={epProgress} className="h-1" />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  {c.qaTier === 'Elevated' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Elevated QA</span>}
                 </div>
-                <div className="space-y-2">
-                  {col.map(c => {
-                    const epProgress = c.episodeCountTarget > 0
-                      ? Math.round((c.episodeCountDelivered / c.episodeCountTarget) * 100)
-                      : 0;
-                    return (
-                      <div key={c.id} onClick={() => setEditClass(c)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
-                        <p className="text-sm font-medium text-foreground mb-1">{c.title}</p>
-                        <p className="text-[10px] text-muted-foreground mb-2">{c.instructorName || 'No instructor'}</p>
-                        {c.episodeCountTarget > 0 && (
-                          <div className="mb-1">
-                            <div className="flex items-center justify-between mb-0.5">
-                              <span className="text-[9px] text-muted-foreground">Episodes</span>
-                              <span className="text-[9px] text-muted-foreground">{c.episodeCountDelivered}/{c.episodeCountTarget}</span>
-                            </div>
-                            <Progress value={epProgress} className="h-1" />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          {c.qaTier === 'Elevated' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Elevated QA</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              </>
             );
-          })}
-        </div>
+          }}
+        />
       )}
 
       <ClassDialog cls={editClass} open={!!editClass || newOpen} onOpenChange={o => { if (!o) { setEditClass(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
