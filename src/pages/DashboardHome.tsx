@@ -106,14 +106,15 @@ export default function DashboardHome() {
     <div className="max-w-[1400px] mx-auto space-y-6">
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KPICard label="Classes Live" value={publishedClasses} icon={Film} />
-        <KPICard label="In Production" value={inProduction} icon={Clapperboard} />
+        <KPICard label="Classes Live" value={publishedClasses} icon={Film} trend={[0, 1, 1, 2, 3, 3, publishedClasses]} />
+        <KPICard label="In Production" value={inProduction} icon={Clapperboard} trend={[1, 2, 3, 2, 4, inProduction]} />
         <KPICard
           label="Open Tasks"
           value={openTasks.length}
           subtitle={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : undefined}
           icon={CheckSquare}
           variant={overdueTasks.length > 0 ? 'alert' : 'default'}
+          trend={[openTasks.length + 3, openTasks.length + 1, openTasks.length + 2, openTasks.length]}
         />
         <KPICard
           label="Days to Launch"
@@ -121,12 +122,13 @@ export default function DashboardHome() {
           icon={CalendarClock}
           variant={daysUntil(settings.launchDate) < 30 ? 'warn' : 'default'}
         />
-        <KPICard label="Total Members" value={settings.totalMembers} icon={Users} />
+        <KPICard label="Total Members" value={settings.totalMembers} icon={Users} trend={[0, 2, 5, 8, 12, settings.totalMembers]} />
         <KPICard
           label="Budget Remaining"
           value={`£${(settings.totalBudget - totalExpenses).toLocaleString()}`}
           icon={PiggyBank}
           variant={(settings.totalBudget - totalExpenses) / settings.totalBudget < 0.2 ? 'alert' : 'default'}
+          trend={[settings.totalBudget, settings.totalBudget - totalExpenses * 0.3, settings.totalBudget - totalExpenses * 0.6, settings.totalBudget - totalExpenses]}
         />
       </div>
 
