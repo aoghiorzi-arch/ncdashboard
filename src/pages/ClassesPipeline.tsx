@@ -83,6 +83,12 @@ export default function ClassesPipeline() {
           </div>
         )}
         <div className="flex items-center gap-2">
+          <Button variant={viewMode === 'pipeline' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('pipeline')}>
+            <LayoutGrid className="w-4 h-4 mr-1" /> Pipeline
+          </Button>
+          <Button variant={viewMode === 'gantt' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('gantt')}>
+            <GanttChartSquare className="w-4 h-4 mr-1" /> Timeline
+          </Button>
           <Button variant="outline" size="sm" onClick={handleCSV} title="Export CSV">
             <Download className="w-4 h-4" />
           </Button>
