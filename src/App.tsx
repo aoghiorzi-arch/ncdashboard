@@ -34,7 +34,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<DashboardHome />} />
