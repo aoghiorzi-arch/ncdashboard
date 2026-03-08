@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Plus, Trash2, Download, Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/EmptyState';
+import { exportToCSV } from '@/lib/csv';
 
 const STAGES = ['Concept / Approved', 'Instructor Briefed', 'Pre-Production', 'Filming Scheduled', 'Filming Complete', 'Editing', 'QA Review', 'Kajabi Build', 'Published', 'Archived'];
 const stageColors: Record<string, string> = {
@@ -15,8 +18,8 @@ const stageColors: Record<string, string> = {
   'Pre-Production': 'bg-accent/10 border-accent/40',
   'Filming Scheduled': 'bg-primary/5 border-primary/20',
   'Filming Complete': 'bg-primary/10 border-primary/30',
-  'Editing': 'bg-nc-warn/5 border-nc-warn/20',
-  'QA Review': 'bg-nc-warn/10 border-nc-warn/30',
+  'Editing': 'bg-accent/5 border-accent/20',
+  'QA Review': 'bg-accent/10 border-accent/30',
   'Kajabi Build': 'bg-nc-success/5 border-nc-success/20',
   'Published': 'bg-nc-success/10 border-nc-success/30',
   'Archived': 'bg-secondary border-secondary',
@@ -44,39 +47,100 @@ export default function ClassesPipeline() {
 
   const handleDelete = (id: string) => { classCRUD.remove(id); setClasses(classCRUD.getAll()); setEditClass(null); };
 
+  const handleCSV = () => {
+    exportToCSV(classes, 'classes_pipeline', [
+      { key: 'title', label: 'Title' }, { key: 'instructorName', label: 'Instructor' },
+      { key: 'pipelineStage', label: 'Stage' }, { key: 'category', label: 'Category' },
+      { key: 'episodeCountTarget', label: 'Target Episodes' }, { key: 'episodeCountDelivered', label: 'Delivered' },
+      { key: 'classGuideStatus', label: 'Guide Status' }, { key: 'kajabiPageStatus', label: 'Kajabi' },
+    ]);
+  };
+
+  // Pipeline progress summary
+  const totalClasses = classes.length;
+  const published = classes.filter(c => c.pipelineStage === 'Published').length;
+  const stageProgress = totalClasses > 0
+    ? Math.round(classes.reduce((sum, c) => sum + STAGES.indexOf(c.pipelineStage), 0) / totalClasses / (STAGES.length - 1) * 100)
+    : 0;
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Class
-        </Button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        {totalClasses > 0 && (
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex-1 max-w-xs">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Pipeline Progress</span>
+                <span className="text-xs font-semibold text-foreground">{stageProgress}%</span>
+              </div>
+              <Progress value={stageProgress} className="h-2" />
+            </div>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {published}/{totalClasses} published
+            </span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleCSV} title="Export CSV">
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> New Class
+          </Button>
+        </div>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-4">
-        {STAGES.map(stage => {
-          const col = classes.filter(c => c.pipelineStage === stage);
-          return (
-            <div key={stage} className={cn('rounded-lg p-3 min-w-[200px] min-h-[250px] border flex-shrink-0', stageColors[stage])}>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{stage}</h4>
-                <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
+      {totalClasses === 0 ? (
+        <EmptyState
+          icon={Film}
+          title="No classes in the pipeline"
+          description="Start building your curriculum by adding your first class."
+          action={
+            <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Add First Class
+            </Button>
+          }
+        />
+      ) : (
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {STAGES.map(stage => {
+            const col = classes.filter(c => c.pipelineStage === stage);
+            return (
+              <div key={stage} className={cn('rounded-lg p-3 min-w-[200px] min-h-[250px] border flex-shrink-0', stageColors[stage])}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{stage}</h4>
+                  <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {col.map(c => {
+                    const epProgress = c.episodeCountTarget > 0
+                      ? Math.round((c.episodeCountDelivered / c.episodeCountTarget) * 100)
+                      : 0;
+                    return (
+                      <div key={c.id} onClick={() => setEditClass(c)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
+                        <p className="text-sm font-medium text-foreground mb-1">{c.title}</p>
+                        <p className="text-[10px] text-muted-foreground mb-2">{c.instructorName || 'No instructor'}</p>
+                        {c.episodeCountTarget > 0 && (
+                          <div className="mb-1">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[9px] text-muted-foreground">Episodes</span>
+                              <span className="text-[9px] text-muted-foreground">{c.episodeCountDelivered}/{c.episodeCountTarget}</span>
+                            </div>
+                            <Progress value={epProgress} className="h-1" />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          {c.qaTier === 'Elevated' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Elevated QA</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-2">
-                {col.map(c => (
-                  <div key={c.id} onClick={() => setEditClass(c)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
-                    <p className="text-sm font-medium text-foreground mb-1">{c.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{c.instructorName || 'No instructor'}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] text-muted-foreground">{c.episodeCountDelivered}/{c.episodeCountTarget} episodes</span>
-                      {c.qaTier === 'Elevated' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-nc-warn/10 text-nc-warn">Elevated QA</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       <ClassDialog cls={editClass} open={!!editClass || newOpen} onOpenChange={o => { if (!o) { setEditClass(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
     </div>
