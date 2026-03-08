@@ -379,6 +379,7 @@ function TaskDialog({
     id: '', title: '', description: '', moduleTag: 'General', priority: 'Medium',
     status: 'Not Started', owner: settings.userName, dueDate: '', subtasks: [],
     notes: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
+    recurrence: 'none', recurrenceEndDate: '',
   };
   const [form, setForm] = useState<Task>(blank);
 
