@@ -293,10 +293,13 @@ export default function TaskManager() {
         onOpenChange={(open) => { if (!open) { setEditTask(null); setNewOpen(false); } }}
         onSave={(task) => {
           const now = new Date().toISOString();
+          const user = getSettings().userName;
           if (editTask) {
             persist(tasks.map(t => t.id === task.id ? { ...task, updatedAt: now } : t));
+            logActivity('updated', 'Tasks', task.title, user);
           } else {
-            persist([...tasks, { ...task, id: generateId(), createdAt: now, updatedAt: now, createdBy: getSettings().userName }]);
+            persist([...tasks, { ...task, id: generateId(), createdAt: now, updatedAt: now, createdBy: user }]);
+            logActivity('created', 'Tasks', task.title, user);
           }
           setEditTask(null);
           setNewOpen(false);
