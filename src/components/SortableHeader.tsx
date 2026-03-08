@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState } from 'react';
 import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,8 +36,9 @@ export function useSortableData<T>(data: T[], defaultKey?: keyof T) {
 
   const toggle = (key: keyof T) => {
     if (sortKey === key) {
-      setSortDir(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
-      if (sortDir === 'desc') setSortKey(null);
+      if (sortDir === 'asc') setSortDir('desc');
+      else if (sortDir === 'desc') { setSortDir(null); setSortKey(null); }
+      else setSortDir('asc');
     } else {
       setSortKey(key);
       setSortDir('asc');
@@ -57,6 +58,3 @@ export function useSortableData<T>(data: T[], defaultKey?: keyof T) {
 
   return { sorted, sortKey, sortDir, toggle };
 }
-
-// Need to import useState
-import { useState } from 'react';
