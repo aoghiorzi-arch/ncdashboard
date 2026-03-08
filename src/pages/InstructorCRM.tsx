@@ -96,30 +96,22 @@ export default function InstructorCRM() {
         instructors.length === 0 ? (
           <EmptyState icon={Users} title="No instructors yet" description="Add your first instructor to start building the pipeline." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Instructor</Button>} />
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-4">
-            {STATUSES.map(status => {
-              const col = instructors.filter(i => i.status === status);
-              return (
-                <div key={status} className={cn('rounded-lg p-3 min-w-[200px] min-h-[200px] border flex-shrink-0', statusColors[status])}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{status}</h4>
-                    <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {col.map(inst => (
-                      <div key={inst.id} onClick={() => setEditItem(inst)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
-                        <p className="text-sm font-medium text-foreground">{inst.fullName}</p>
-                        <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          <KanbanBoard<Instructor & KanbanCard>
+            columns={STATUSES}
+            columnColors={statusColors}
+            items={instructors.map(i => ({ ...i, column: i.status }))}
+            onMove={handleKanbanMove}
+            onCardClick={inst => setEditItem(inst)}
+            renderCard={inst => (
+              <>
+                <p className="text-sm font-medium text-foreground">{inst.fullName}</p>
+                <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
                 </div>
-              );
-            })}
-          </div>
+              </>
+            )}
+          />
         )
       )}
 
