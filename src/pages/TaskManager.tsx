@@ -111,6 +111,46 @@ export default function TaskManager() {
     ]);
   };
 
+  const handleCSVImport = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast.error('No data found in CSV'); return; }
+      const now = new Date().toISOString();
+      const user = getSettings().userName;
+      const imported: Task[] = rows.map(row => ({
+        id: generateId(),
+        title: row['Title'] || row['title'] || 'Untitled',
+        description: row['Description'] || row['description'] || '',
+        moduleTag: (row['Module'] || row['moduleTag'] || 'General') as Task['moduleTag'],
+        priority: (row['Priority'] || row['priority'] || 'Medium') as Task['priority'],
+        status: (row['Status'] || row['status'] || 'Not Started') as Task['status'],
+        owner: row['Owner'] || row['owner'] || user,
+        dueDate: row['Due Date'] || row['dueDate'] || '',
+        subtasks: [], notes: [], attachments: [], pinned: false,
+        createdBy: user, createdAt: now, updatedAt: now,
+        recurrence: 'none', recurrenceEndDate: '',
+      }));
+      persist([...tasks, ...imported]);
+      imported.forEach(t => logActivity('created', 'Tasks', t.title, user));
+      toast.success(`Imported ${imported.length} tasks from CSV`);
+    } catch {
+      toast.error('CSV import cancelled or failed');
+    }
+  };
+
+  const ganttItems: GanttItem[] = filtered
+    .filter(t => t.dueDate)
+    .map(t => ({
+      id: t.id,
+      title: t.title,
+      startDate: t.createdAt ? t.createdAt.split('T')[0] : t.dueDate,
+      endDate: t.dueDate,
+      stage: t.status,
+      progress: t.status === 'Complete' ? 100 : t.status === 'In Review' ? 75 : t.status === 'In Progress' ? 40 : t.status === 'Blocked' ? 20 : 0,
+      color: t.status === 'Complete' ? 'bg-nc-success' : t.status === 'Blocked' ? 'bg-destructive' : t.priority === 'Critical' ? 'bg-destructive/80' : 'bg-accent',
+    }));
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
       {/* Toolbar */}
