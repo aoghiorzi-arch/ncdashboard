@@ -11,6 +11,7 @@ import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Plus, Trash2, Star, Download, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 
 const STATUSES = ['Identified', 'Approached', 'In Conversation', 'Agreement Sent', 'Contracted', 'Class in Production', 'Class Live', 'Relationship Paused'];
 const statusColors: Record<string, string> = {
