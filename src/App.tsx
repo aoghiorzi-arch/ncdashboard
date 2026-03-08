@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/workflows" element={<WorkflowsPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/portal" element={<StakeholderPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
