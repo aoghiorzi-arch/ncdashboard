@@ -6,7 +6,18 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "./components/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import TaskManager from "./pages/TaskManager";
-import ComingSoon from "./pages/ComingSoon";
+import CalendarModule from "./pages/CalendarModule";
+import ClassesPipeline from "./pages/ClassesPipeline";
+import InstructorCRM from "./pages/InstructorCRM";
+import DocumentLibrary from "./pages/DocumentLibrary";
+import IdeasBacklog from "./pages/IdeasBacklog";
+import EventsManager from "./pages/EventsManager";
+import Partnerships from "./pages/Partnerships";
+import BudgetExpenses from "./pages/BudgetExpenses";
+import PlatformMetrics from "./pages/PlatformMetrics";
+import LegalCompliance from "./pages/LegalCompliance";
+import TeamRoles from "./pages/TeamRoles";
+import SettingsModule from "./pages/SettingsModule";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,18 +32,18 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<DashboardHome />} />
             <Route path="/tasks" element={<TaskManager />} />
-            <Route path="/calendar" element={<ComingSoon />} />
-            <Route path="/classes" element={<ComingSoon />} />
-            <Route path="/instructors" element={<ComingSoon />} />
-            <Route path="/documents" element={<ComingSoon />} />
-            <Route path="/ideas" element={<ComingSoon />} />
-            <Route path="/events" element={<ComingSoon />} />
-            <Route path="/partnerships" element={<ComingSoon />} />
-            <Route path="/budget" element={<ComingSoon />} />
-            <Route path="/metrics" element={<ComingSoon />} />
-            <Route path="/legal" element={<ComingSoon />} />
-            <Route path="/team" element={<ComingSoon />} />
-            <Route path="/settings" element={<ComingSoon />} />
+            <Route path="/calendar" element={<CalendarModule />} />
+            <Route path="/classes" element={<ClassesPipeline />} />
+            <Route path="/instructors" element={<InstructorCRM />} />
+            <Route path="/documents" element={<DocumentLibrary />} />
+            <Route path="/ideas" element={<IdeasBacklog />} />
+            <Route path="/events" element={<EventsManager />} />
+            <Route path="/partnerships" element={<Partnerships />} />
+            <Route path="/budget" element={<BudgetExpenses />} />
+            <Route path="/metrics" element={<PlatformMetrics />} />
+            <Route path="/legal" element={<LegalCompliance />} />
+            <Route path="/team" element={<TeamRoles />} />
+            <Route path="/settings" element={<SettingsModule />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
