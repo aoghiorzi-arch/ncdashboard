@@ -187,9 +187,14 @@ export default function ChecklistsPage() {
           <ClipboardList className="w-5 h-5 text-accent" />
           Checklists
         </h2>
-        <Button onClick={openNew} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> New Checklist
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setTemplateView(true)} size="sm" variant="outline">
+            <ClipboardList className="w-4 h-4 mr-1" /> From Template
+          </Button>
+          <Button onClick={openNew} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> New Checklist
+          </Button>
+        </div>
       </div>
 
       {checklists.length === 0 ? (
