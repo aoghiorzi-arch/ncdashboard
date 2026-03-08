@@ -28,6 +28,7 @@ const NAV_SECTIONS = [
     label: 'Operations',
     items: [
       { title: 'Tasks', path: '/tasks', icon: CheckSquare },
+      { title: 'Checklists', path: '/checklists', icon: ClipboardList },
       { title: 'Classes Pipeline', path: '/classes', icon: Film },
       { title: 'Instructor CRM', path: '/instructors', icon: Users },
       { title: 'Documents', path: '/documents', icon: FolderOpen },
