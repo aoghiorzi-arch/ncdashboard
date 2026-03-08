@@ -1,14 +1,11 @@
 import { useState, useCallback } from 'react';
 import {
-  getTasks, saveTasks, getEvents, saveEvents, getExpenses,
-  getSettings, saveSettings, type Task, type CalendarEvent,
-  type Expense, type NCSettings, generateId,
+  getTasks, saveTasks, getSettings, saveSettings,
+  type Task, type NCSettings, generateId,
 } from '@/lib/storage';
 
 export function useNCData() {
   const [tasks, setTasks] = useState<Task[]>(getTasks);
-  const [events, setEvents] = useState<CalendarEvent[]>(getEvents);
-  const [expenses] = useState<Expense[]>(getExpenses);
   const [settings, setSettingsState] = useState<NCSettings>(getSettings);
 
   const refreshTasks = useCallback(() => {
@@ -59,7 +56,7 @@ export function useNCData() {
   }, []);
 
   return {
-    tasks, events, expenses, settings,
+    tasks, settings,
     upsertTask, removeTask, refreshTasks,
     updateSettings,
   };
