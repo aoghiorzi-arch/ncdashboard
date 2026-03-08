@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
 import { GanttChart, type GanttItem } from '@/components/GanttChart';
+import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 
 const STAGES = ['Concept / Approved', 'Instructor Briefed', 'Pre-Production', 'Filming Scheduled', 'Filming Complete', 'Editing', 'QA Review', 'Kajabi Build', 'Published', 'Archived'];
 const stageColors: Record<string, string> = {
