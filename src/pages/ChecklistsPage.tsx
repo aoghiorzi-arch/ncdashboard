@@ -20,6 +20,72 @@ const COLORS = [
   'hsl(260, 50%, 50%)',
 ];
 
+interface ChecklistTemplate {
+  title: string;
+  description: string;
+  color: string;
+  items: string[];
+}
+
+const TEMPLATES: ChecklistTemplate[] = [
+  {
+    title: 'Launch Readiness',
+    description: 'Pre-launch checklist to ensure everything is ready',
+    color: 'hsl(var(--destructive))',
+    items: [
+      'Legal & compliance review complete',
+      'All content proofread and approved',
+      'Technical QA passed',
+      'Marketing materials ready',
+      'Payment systems tested',
+      'Support team briefed',
+      'Analytics tracking verified',
+      'Rollback plan documented',
+    ],
+  },
+  {
+    title: 'Team Onboarding',
+    description: 'Steps for onboarding a new team member',
+    color: 'hsl(160, 50%, 40%)',
+    items: [
+      'Send welcome email with login credentials',
+      'Schedule intro call with team lead',
+      'Grant access to tools & platforms',
+      'Share brand guidelines & docs',
+      'Assign first-week buddy',
+      'Set up recurring 1:1 meetings',
+      'Complete HR paperwork',
+    ],
+  },
+  {
+    title: 'Weekly Review',
+    description: 'End-of-week review routine',
+    color: 'hsl(var(--primary))',
+    items: [
+      'Review task completion vs. plan',
+      'Update budget tracker',
+      'Check upcoming deadlines',
+      'Prepare status report highlights',
+      'Flag blockers for next week',
+      'Celebrate wins with the team',
+    ],
+  },
+  {
+    title: 'Event Planning',
+    description: 'Checklist for organising an event or workshop',
+    color: 'hsl(260, 50%, 50%)',
+    items: [
+      'Confirm venue / virtual platform',
+      'Send invitations & collect RSVPs',
+      'Prepare agenda & materials',
+      'Arrange catering or refreshments',
+      'Test AV / tech equipment',
+      'Assign roles (host, moderator, etc.)',
+      'Send post-event follow-up',
+    ],
+  },
+];
+
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,6 +159,19 @@ export default function ChecklistsPage() {
     refresh();
   };
 
+  const [templateView, setTemplateView] = useState(false);
+
+  const applyTemplate = (t: ChecklistTemplate) => {
+    setEditing(null);
+    setTitle(t.title);
+    setDescription(t.description);
+    setColor(t.color);
+    setItems(t.items.map(label => ({ id: generateId(), label, done: false })));
+    setNewItemText('');
+    setTemplateView(false);
+    setDialogOpen(true);
+  };
+
   const toggleItem = (checklistId: string, itemId: string) => {
     const cl = checklists.find(c => c.id === checklistId);
     if (!cl) return;
@@ -121,9 +200,14 @@ export default function ChecklistsPage() {
           <ClipboardList className="w-5 h-5 text-accent" />
           Checklists
         </h2>
-        <Button onClick={openNew} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> New Checklist
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setTemplateView(true)} size="sm" variant="outline">
+            <ClipboardList className="w-4 h-4 mr-1" /> From Template
+          </Button>
+          <Button onClick={openNew} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> New Checklist
+          </Button>
+        </div>
       </div>
 
       {checklists.length === 0 ? (
@@ -257,6 +341,41 @@ export default function ChecklistsPage() {
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={save}>{editing ? 'Save Changes' : 'Create Checklist'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={templateView} onOpenChange={setTemplateView}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Choose a Template</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {TEMPLATES.map(t => (
+              <button
+                key={t.title}
+                onClick={() => applyTemplate(t)}
+                className="text-left p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+                  <span className="font-medium text-sm text-foreground">{t.title}</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{t.items.length} items</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{t.description}</p>
+                <ul className="space-y-0.5">
+                  {t.items.slice(0, 3).map(item => (
+                    <li key={item} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Circle className="w-2.5 h-2.5 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                  {t.items.length > 3 && (
+                    <li className="text-[10px] text-muted-foreground pl-4">+{t.items.length - 3} more</li>
+                  )}
+                </ul>
+              </button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
