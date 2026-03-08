@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getTasks, getExpenses, getSettings, classCRUD, type Task } from '@/lib/storage';
+import { getTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, type Task } from '@/lib/storage';
 import { KPICard } from '@/components/KPICard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { ProjectHealthScore } from '@/components/ProjectHealthScore';
