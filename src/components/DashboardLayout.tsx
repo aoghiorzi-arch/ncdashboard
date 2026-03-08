@@ -149,6 +149,7 @@ export function DashboardLayout() {
       </button>
 
       <QuickAddDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
+      <GlobalSearch />
     </div>
   );
 }

@@ -221,6 +221,14 @@ export interface MetricEntry {
   createdAt: string;
 }
 
+export interface SharePointConfig {
+  enabled: boolean;
+  siteUrl: string;
+  tenantId: string;
+  clientId: string;
+  listMappings: Record<string, string>; // module key -> SharePoint list name
+}
+
 export interface NCSettings {
   platformName: string;
   launchDate: string;
@@ -230,7 +238,20 @@ export interface NCSettings {
   totalMembers: number;
   foundersMembers: number;
   darkMode: boolean;
+  sharePoint: SharePointConfig;
 }
+
+const DEFAULT_SHAREPOINT: SharePointConfig = {
+  enabled: false,
+  siteUrl: '',
+  tenantId: '',
+  clientId: '',
+  listMappings: {
+    tasks: '', calendar: '', classes: '', instructors: '',
+    documents: '', ideas: '', events: '', partnerships: '',
+    expenses: '', income: '', compliance: '', team: '', metrics: '',
+  },
+};
 
 const DEFAULT_SETTINGS: NCSettings = {
   platformName: 'Newbold Connect',
@@ -241,6 +262,7 @@ const DEFAULT_SETTINGS: NCSettings = {
   totalMembers: 0,
   foundersMembers: 0,
   darkMode: false,
+  sharePoint: DEFAULT_SHAREPOINT,
 };
 
 function getStore<T>(key: string, fallback: T): T {
