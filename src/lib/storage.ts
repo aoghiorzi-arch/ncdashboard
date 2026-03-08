@@ -276,6 +276,20 @@ const DEFAULT_SHAREPOINT: SharePointConfig = {
   },
 };
 
+export const DEFAULT_WIDGETS: DashboardWidget[] = [
+  { id: 'kpis', visible: true },
+  { id: 'health', visible: true },
+  { id: 'milestones', visible: true },
+  { id: 'statusReport', visible: true },
+  { id: 'heatmap', visible: true },
+  { id: 'weeklyDigest', visible: true },
+  { id: 'agenda', visible: true },
+  { id: 'alerts', visible: true },
+  { id: 'burndown', visible: true },
+  { id: 'recentTasks', visible: true },
+  { id: 'activityFeed', visible: true },
+];
+
 const DEFAULT_SETTINGS: NCSettings = {
   platformName: 'Newbold Connect',
   launchDate: '2026-06-27',
@@ -286,6 +300,8 @@ const DEFAULT_SETTINGS: NCSettings = {
   foundersMembers: 0,
   darkMode: false,
   sharePoint: DEFAULT_SHAREPOINT,
+  userRole: 'admin',
+  dashboardWidgets: DEFAULT_WIDGETS,
 };
 
 function getStore<T>(key: string, fallback: T): T {
