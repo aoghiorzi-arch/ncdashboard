@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { eventCRUD, generateId, type NCEvent } from '@/lib/storage';
+import { eventCRUD, generateId, getSettings, type NCEvent } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Users, CalendarDays } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, Users, CalendarDays, Download, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EVENT_STATUSES: NCEvent['status'][] = ['Planning', 'Confirmed', 'In Progress', 'Complete', 'Cancelled'];
@@ -29,42 +32,57 @@ export default function EventsManager() {
 
   const handleSave = (ev: NCEvent) => {
     const now = new Date().toISOString();
-    if (editEvent) { eventCRUD.update({ ...ev, updatedAt: now }); }
-    else { eventCRUD.add({ ...ev, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editEvent) { eventCRUD.update({ ...ev, updatedAt: now }); logActivity('updated', 'Events', ev.title, user); }
+    else { eventCRUD.add({ ...ev, id: generateId(), createdAt: now, updatedAt: now }); logActivity('created', 'Events', ev.title, user); }
     setEvents(eventCRUD.getAll());
     setEditEvent(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { eventCRUD.remove(id); setEvents(eventCRUD.getAll()); setEditEvent(null); };
+  const handleDelete = (id: string) => {
+    const ev = events.find(e => e.id === id);
+    eventCRUD.remove(id);
+    if (ev) logActivity('deleted', 'Events', ev.title, getSettings().userName);
+    setEvents(eventCRUD.getAll()); setEditEvent(null);
+  };
+
+  const handleExport = () => exportToCSV(events, 'events', [
+    { key: 'title', label: 'Title' }, { key: 'date', label: 'Date' }, { key: 'venue', label: 'Venue' },
+    { key: 'status', label: 'Status' }, { key: 'capacity', label: 'Capacity' }, { key: 'leadOrganiser', label: 'Lead Organiser' },
+  ]);
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
         <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Event
         </Button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {events.map(ev => (
-          <div key={ev.id} onClick={() => setEditEvent(ev)} className="bg-card rounded-lg p-5 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
-            <div className="flex items-start justify-between mb-3">
-              <h4 className="text-base font-semibold text-foreground">{ev.title}</h4>
-              <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0', statusBadge[ev.status])}>{ev.status}</span>
+      {events.length === 0 ? (
+        <EmptyState icon={PartyPopper} title="No events yet" description="Create your first event workspace to start planning." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Event</Button>} />
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {events.map(ev => (
+            <div key={ev.id} onClick={() => setEditEvent(ev)} className="bg-card rounded-lg p-5 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
+              <div className="flex items-start justify-between mb-3">
+                <h4 className="text-base font-semibold text-foreground">{ev.title}</h4>
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0', statusBadge[ev.status])}>{ev.status}</span>
+              </div>
+              <div className="space-y-1.5 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{ev.date || 'No date set'}</p>
+                <p>{ev.venue || 'No venue set'}</p>
+                <p className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{ev.guestList.length} guests • Capacity: {ev.capacity || '—'}</p>
+                <p>{ev.programme.length} programme segments</p>
+              </div>
+              <div className="flex justify-end mt-3">
+                <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
             </div>
-            <div className="space-y-1.5 text-xs text-muted-foreground">
-              <p className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{ev.date || 'No date set'}</p>
-              <p>{ev.venue || 'No venue set'}</p>
-              <p className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{ev.guestList.length} guests • Capacity: {ev.capacity || '—'}</p>
-              <p>{ev.programme.length} programme segments</p>
-            </div>
-            <div className="flex justify-end mt-3">
-              <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
-            </div>
-          </div>
-        ))}
-        {events.length === 0 && <p className="col-span-full text-center text-muted-foreground text-sm py-12">No events yet. Create your first event workspace.</p>}
-      </div>
+          ))}
+        </div>
+      )}
 
       <EventDialog event={editEvent} open={!!editEvent || newOpen} onOpenChange={o => { if (!o) { setEditEvent(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
     </div>
@@ -108,8 +126,6 @@ function EventDialog({ event, open, onOpenChange, onSave, onDelete }: {
             </div>
             <Input placeholder="Lead organiser" value={form.leadOrganiser} onChange={e => u({ leadOrganiser: e.target.value })} />
           </div>
-
-          {/* Programme */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">Programme</h4>
@@ -126,8 +142,6 @@ function EventDialog({ event, open, onOpenChange, onSave, onDelete }: {
               </div>
             ))}
           </div>
-
-          {/* Guest List */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">Guest List</h4>
@@ -151,7 +165,6 @@ function EventDialog({ event, open, onOpenChange, onSave, onDelete }: {
               </div>
             ))}
           </div>
-
           <Textarea placeholder="Notes..." value={form.notes} onChange={e => u({ notes: e.target.value })} rows={2} />
           <div className="flex gap-2">
             <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.title.trim()) onSave(form); }} disabled={!form.title.trim()}>{event ? 'Save' : 'Create'}</Button>

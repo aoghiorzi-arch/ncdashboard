@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { documentCRUD, generateId, type NCDocument } from '@/lib/storage';
+import { documentCRUD, generateId, getSettings, type NCDocument } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, ExternalLink, FolderOpen } from 'lucide-react';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, ExternalLink, FolderOpen, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FOLDERS = ['Governance', 'Legal & Compliance', 'Brand & Content', 'Classes', 'Instructors', 'Marketing', 'Events', 'Finance', 'Production', 'Archive'];
@@ -30,15 +34,27 @@ export default function DocumentLibrary() {
 
   const handleSave = (d: NCDocument) => {
     const now = new Date().toISOString();
-    if (editDoc) { documentCRUD.update({ ...d, updatedAt: now }); }
-    else { documentCRUD.add({ ...d, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editDoc) { documentCRUD.update({ ...d, updatedAt: now }); logActivity('updated', 'Documents', d.title, user); }
+    else { documentCRUD.add({ ...d, id: generateId(), createdAt: now, updatedAt: now }); logActivity('created', 'Documents', d.title, user); }
     setDocs(documentCRUD.getAll());
     setEditDoc(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { documentCRUD.remove(id); setDocs(documentCRUD.getAll()); setEditDoc(null); };
+  const handleDelete = (id: string) => {
+    const doc = docs.find(d => d.id === id);
+    documentCRUD.remove(id);
+    if (doc) logActivity('deleted', 'Documents', doc.title, getSettings().userName);
+    setDocs(documentCRUD.getAll()); setEditDoc(null);
+  };
 
   const filtered = filterFolder === 'all' ? docs : docs.filter(d => d.folder === filterFolder);
+  const { sorted, sortKey, sortDir, toggle } = useSortableData(filtered, 'title');
+
+  const handleExport = () => exportToCSV(filtered, 'documents', [
+    { key: 'title', label: 'Title' }, { key: 'folder', label: 'Folder' }, { key: 'version', label: 'Version' },
+    { key: 'status', label: 'Status' }, { key: 'owner', label: 'Owner' }, { key: 'nextReviewDate', label: 'Next Review' },
+  ]);
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
@@ -50,21 +66,27 @@ export default function DocumentLibrary() {
             {FOLDERS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Document
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+          <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> New Document
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-xs text-muted-foreground border-b">
-            <th className="text-left p-3 font-medium">Title</th><th className="text-left p-3 font-medium">Folder</th>
-            <th className="text-left p-3 font-medium">Version</th><th className="text-left p-3 font-medium">Status</th>
-            <th className="text-left p-3 font-medium">Owner</th><th className="text-left p-3 font-medium">Next Review</th>
+          <thead><tr className="border-b">
+            <th className="text-left p-3"><SortableHeader label="Title" active={sortKey === 'title'} direction={sortKey === 'title' ? sortDir : null} onClick={() => toggle('title')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Folder" active={sortKey === 'folder'} direction={sortKey === 'folder' ? sortDir : null} onClick={() => toggle('folder')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Version" active={sortKey === 'version'} direction={sortKey === 'version' ? sortDir : null} onClick={() => toggle('version')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggle('status')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Owner" active={sortKey === 'owner'} direction={sortKey === 'owner' ? sortDir : null} onClick={() => toggle('owner')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Next Review" active={sortKey === 'nextReviewDate'} direction={sortKey === 'nextReviewDate' ? sortDir : null} onClick={() => toggle('nextReviewDate')} /></th>
             <th className="p-3"></th>
           </tr></thead>
           <tbody>
-            {filtered.map(doc => (
+            {sorted.map(doc => (
               <tr key={doc.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditDoc(doc)}>
                 <td className="p-3 font-medium text-foreground flex items-center gap-2">
                   <FolderOpen className="w-3.5 h-3.5 text-accent shrink-0" />{doc.title}
@@ -78,7 +100,7 @@ export default function DocumentLibrary() {
                 <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(doc.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">No documents. Add one to get started.</td></tr>}
+            {sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={FolderOpen} title="No documents" description="Add your first document to start organising." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Document</Button>} /></td></tr>}
           </tbody>
         </table>
       </div>

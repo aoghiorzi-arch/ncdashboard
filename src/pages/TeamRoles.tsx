@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { teamCRUD, generateId, type TeamMember } from '@/lib/storage';
+import { teamCRUD, generateId, getSettings, type TeamMember } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, User } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, User, Download, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EMPLOYMENT_TYPES: TeamMember['employmentType'][] = ['Staff', 'Contractor', 'Volunteer', 'Instructor'];
@@ -28,43 +31,58 @@ export default function TeamRoles() {
 
   const handleSave = (m: TeamMember) => {
     const now = new Date().toISOString();
-    if (editMember) { teamCRUD.update({ ...m, updatedAt: now }); }
-    else { teamCRUD.add({ ...m, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editMember) { teamCRUD.update({ ...m, updatedAt: now }); logActivity('updated', 'Team', m.name, user); }
+    else { teamCRUD.add({ ...m, id: generateId(), createdAt: now, updatedAt: now }); logActivity('created', 'Team', m.name, user); }
     setMembers(teamCRUD.getAll());
     setEditMember(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { teamCRUD.remove(id); setMembers(teamCRUD.getAll()); setEditMember(null); };
+  const handleDelete = (id: string) => {
+    const m = members.find(i => i.id === id);
+    teamCRUD.remove(id);
+    if (m) logActivity('deleted', 'Team', m.name, getSettings().userName);
+    setMembers(teamCRUD.getAll()); setEditMember(null);
+  };
+
+  const handleExport = () => exportToCSV(members, 'team', [
+    { key: 'name', label: 'Name' }, { key: 'roleTitle', label: 'Role' }, { key: 'employmentType', label: 'Type' },
+    { key: 'email', label: 'Email' }, { key: 'startDate', label: 'Start Date' },
+  ]);
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
         <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> Add Member
         </Button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {members.map(m => (
-          <div key={m.id} onClick={() => setEditMember(m)} className="bg-card rounded-lg p-5 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <User className="w-5 h-5 text-accent" />
+      {members.length === 0 ? (
+        <EmptyState icon={UserCog} title="No team members" description="Add your first team member to start managing roles." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> Add Member</Button>} />
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {members.map(m => (
+            <div key={m.id} onClick={() => setEditMember(m)} className="bg-card rounded-lg p-5 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground">{m.name}</h4>
+                    <p className="text-xs text-muted-foreground">{m.roleTitle}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground">{m.name}</h4>
-                  <p className="text-xs text-muted-foreground">{m.roleTitle}</p>
-                </div>
+                <button onClick={e => { e.stopPropagation(); handleDelete(m.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
-              <button onClick={e => { e.stopPropagation(); handleDelete(m.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
+              <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', typeBadge[m.employmentType])}>{m.employmentType}</span>
+              {m.email && <p className="text-xs text-muted-foreground mt-2">{m.email}</p>}
             </div>
-            <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', typeBadge[m.employmentType])}>{m.employmentType}</span>
-            {m.email && <p className="text-xs text-muted-foreground mt-2">{m.email}</p>}
-          </div>
-        ))}
-        {members.length === 0 && <p className="col-span-full text-center text-muted-foreground text-sm py-12">No team members. Add your first team member.</p>}
-      </div>
+          ))}
+        </div>
+      )}
 
       <MemberDialog member={editMember} open={!!editMember || newOpen} onOpenChange={o => { if (!o) { setEditMember(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
     </div>

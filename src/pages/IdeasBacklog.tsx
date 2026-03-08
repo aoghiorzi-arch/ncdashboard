@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ideaCRUD, generateId, getSettings, type Idea } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Lightbulb } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, Lightbulb, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES: Idea['category'][] = ['Class Idea', 'Feature', 'Marketing', 'Partnership', 'Event', 'Other'];
@@ -31,13 +34,24 @@ export default function IdeasBacklog() {
 
   const handleSave = (item: Idea) => {
     const now = new Date().toISOString();
-    if (editItem) { ideaCRUD.update({ ...item, updatedAt: now }); }
-    else { ideaCRUD.add({ ...item, id: generateId(), submittedBy: getSettings().userName, createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editItem) { ideaCRUD.update({ ...item, updatedAt: now }); logActivity('updated', 'Ideas', item.title, user); }
+    else { ideaCRUD.add({ ...item, id: generateId(), submittedBy: user, createdAt: now, updatedAt: now }); logActivity('created', 'Ideas', item.title, user); }
     setIdeas(ideaCRUD.getAll());
     setEditItem(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { ideaCRUD.remove(id); setIdeas(ideaCRUD.getAll()); setEditItem(null); };
+  const handleDelete = (id: string) => {
+    const item = ideas.find(i => i.id === id);
+    ideaCRUD.remove(id);
+    if (item) logActivity('deleted', 'Ideas', item.title, getSettings().userName);
+    setIdeas(ideaCRUD.getAll()); setEditItem(null);
+  };
+
+  const handleExport = () => exportToCSV(ideas, 'ideas', [
+    { key: 'title', label: 'Title' }, { key: 'category', label: 'Category' }, { key: 'status', label: 'Status' },
+    { key: 'impactScore', label: 'Impact' }, { key: 'effortScore', label: 'Effort' }, { key: 'submittedBy', label: 'Submitted By' },
+  ]);
 
   const filtered = filterStatus === 'all' ? ideas : ideas.filter(i => i.status === filterStatus);
   const sorted = [...filtered].sort((a, b) => (b.impactScore * b.effortScore) - (a.impactScore * a.effortScore));
@@ -52,33 +66,39 @@ export default function IdeasBacklog() {
             {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Idea
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+          <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> New Idea
+          </Button>
+        </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sorted.map(idea => (
-          <div key={idea.id} onClick={() => setEditItem(idea)} className="bg-card rounded-lg p-4 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-accent shrink-0" />
-                <h4 className="text-sm font-semibold text-foreground">{idea.title}</h4>
+      {sorted.length === 0 ? (
+        <EmptyState icon={Lightbulb} title="No ideas yet" description="Capture your first idea to start building the backlog." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Idea</Button>} />
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sorted.map(idea => (
+            <div key={idea.id} onClick={() => setEditItem(idea)} className="bg-card rounded-lg p-4 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-accent shrink-0" />
+                  <h4 className="text-sm font-semibold text-foreground">{idea.title}</h4>
+                </div>
+                <button onClick={e => { e.stopPropagation(); handleDelete(idea.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
-              <button onClick={e => { e.stopPropagation(); handleDelete(idea.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
-            </div>
-            {idea.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{idea.description}</p>}
-            <div className="flex items-center justify-between">
-              <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[idea.status])}>{idea.status}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground">{idea.category}</span>
-                <span className="text-[10px] font-bold text-accent">Score: {idea.impactScore * idea.effortScore}</span>
+              {idea.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{idea.description}</p>}
+              <div className="flex items-center justify-between">
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[idea.status])}>{idea.status}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground">{idea.category}</span>
+                  <span className="text-[10px] font-bold text-accent">Score: {idea.impactScore * idea.effortScore}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {sorted.length === 0 && <p className="col-span-full text-center text-muted-foreground text-sm py-12">No ideas yet. Capture your first idea!</p>}
-      </div>
+          ))}
+        </div>
+      )}
 
       <IdeaDialog item={editItem} open={!!editItem || newOpen} onOpenChange={o => { if (!o) { setEditItem(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
     </div>

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { complianceCRUD, generateId, type ComplianceItem } from '@/lib/storage';
+import { complianceCRUD, generateId, getSettings, type ComplianceItem } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Shield, AlertTriangle } from 'lucide-react';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, Shield, AlertTriangle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES: ComplianceItem['category'][] = ['GDPR', 'PECR', 'Safeguarding', 'Trading Standards', 'Employment', 'Other'];
@@ -25,6 +29,7 @@ export default function LegalCompliance() {
   const [items, setItems] = useState<ComplianceItem[]>([]);
   const [editItem, setEditItem] = useState<ComplianceItem | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const { sorted, sortKey, sortDir, toggle } = useSortableData(items, 'title');
 
   useEffect(() => {
     const refresh = () => setItems(complianceCRUD.getAll());
@@ -35,13 +40,24 @@ export default function LegalCompliance() {
 
   const handleSave = (item: ComplianceItem) => {
     const now = new Date().toISOString();
-    if (editItem) { complianceCRUD.update({ ...item, updatedAt: now }); }
-    else { complianceCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editItem) { complianceCRUD.update({ ...item, updatedAt: now }); logActivity('updated', 'Legal', item.title, user); }
+    else { complianceCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now }); logActivity('created', 'Legal', item.title, user); }
     setItems(complianceCRUD.getAll());
     setEditItem(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { complianceCRUD.remove(id); setItems(complianceCRUD.getAll()); setEditItem(null); };
+  const handleDelete = (id: string) => {
+    const item = items.find(i => i.id === id);
+    complianceCRUD.remove(id);
+    if (item) logActivity('deleted', 'Legal', item.title, getSettings().userName);
+    setItems(complianceCRUD.getAll()); setEditItem(null);
+  };
+
+  const handleExport = () => exportToCSV(items, 'compliance', [
+    { key: 'title', label: 'Item' }, { key: 'category', label: 'Category' }, { key: 'status', label: 'Status' },
+    { key: 'priority', label: 'Priority' }, { key: 'owner', label: 'Owner' }, { key: 'dueDate', label: 'Due Date' },
+  ]);
 
   const actionRequired = items.filter(i => i.status === 'Action Required' || i.priority === 'Critical');
 
@@ -59,7 +75,8 @@ export default function LegalCompliance() {
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
         <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Item
         </Button>
@@ -67,13 +84,17 @@ export default function LegalCompliance() {
 
       <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-xs text-muted-foreground border-b">
-            <th className="text-left p-3 font-medium">Item</th><th className="text-left p-3 font-medium">Category</th>
-            <th className="text-left p-3 font-medium">Status</th><th className="text-left p-3 font-medium">Priority</th>
-            <th className="text-left p-3 font-medium">Owner</th><th className="text-left p-3 font-medium">Due</th><th className="p-3"></th>
+          <thead><tr className="border-b">
+            <th className="text-left p-3"><SortableHeader label="Item" active={sortKey === 'title'} direction={sortKey === 'title' ? sortDir : null} onClick={() => toggle('title')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Category" active={sortKey === 'category'} direction={sortKey === 'category' ? sortDir : null} onClick={() => toggle('category')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggle('status')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Priority" active={sortKey === 'priority'} direction={sortKey === 'priority' ? sortDir : null} onClick={() => toggle('priority')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Owner" active={sortKey === 'owner'} direction={sortKey === 'owner' ? sortDir : null} onClick={() => toggle('owner')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Due" active={sortKey === 'dueDate'} direction={sortKey === 'dueDate' ? sortDir : null} onClick={() => toggle('dueDate')} /></th>
+            <th className="p-3"></th>
           </tr></thead>
           <tbody>
-            {items.map(item => (
+            {sorted.map(item => (
               <tr key={item.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditItem(item)}>
                 <td className="p-3 font-medium text-foreground flex items-center gap-2">
                   <Shield className="w-3.5 h-3.5 text-accent shrink-0" />{item.title}
@@ -86,7 +107,7 @@ export default function LegalCompliance() {
                 <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(item.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">No compliance items. Add one to track your obligations.</td></tr>}
+            {sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={Shield} title="No compliance items" description="Add one to track your legal obligations." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Item</Button>} /></td></tr>}
           </tbody>
         </table>
       </div>

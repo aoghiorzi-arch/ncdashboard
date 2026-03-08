@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { partnershipCRUD, generateId, type Partnership } from '@/lib/storage';
+import { partnershipCRUD, generateId, getSettings, type Partnership } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, Handshake, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TYPES: Partnership['type'][] = ['Church', 'Academic', 'Media', 'Funder', 'Supplier', 'Other'];
@@ -21,6 +25,7 @@ export default function Partnerships() {
   const [items, setItems] = useState<Partnership[]>([]);
   const [editItem, setEditItem] = useState<Partnership | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const { sorted, sortKey, sortDir, toggle } = useSortableData(items, 'organisationName');
 
   useEffect(() => {
     const refresh = () => setItems(partnershipCRUD.getAll());
@@ -31,17 +36,29 @@ export default function Partnerships() {
 
   const handleSave = (item: Partnership) => {
     const now = new Date().toISOString();
-    if (editItem) { partnershipCRUD.update({ ...item, updatedAt: now }); }
-    else { partnershipCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editItem) { partnershipCRUD.update({ ...item, updatedAt: now }); logActivity('updated', 'Partnerships', item.organisationName, user); }
+    else { partnershipCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now }); logActivity('created', 'Partnerships', item.organisationName, user); }
     setItems(partnershipCRUD.getAll());
     setEditItem(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { partnershipCRUD.remove(id); setItems(partnershipCRUD.getAll()); setEditItem(null); };
+  const handleDelete = (id: string) => {
+    const item = items.find(i => i.id === id);
+    partnershipCRUD.remove(id);
+    if (item) logActivity('deleted', 'Partnerships', item.organisationName, getSettings().userName);
+    setItems(partnershipCRUD.getAll()); setEditItem(null);
+  };
+
+  const handleExport = () => exportToCSV(items, 'partnerships', [
+    { key: 'organisationName', label: 'Organisation' }, { key: 'type', label: 'Type' }, { key: 'status', label: 'Status' },
+    { key: 'primaryContactName', label: 'Contact' }, { key: 'agreementType', label: 'Agreement' }, { key: 'nextActionDate', label: 'Next Action Date' },
+  ]);
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
         <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> New Partnership
         </Button>
@@ -49,14 +66,17 @@ export default function Partnerships() {
 
       <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-xs text-muted-foreground border-b">
-            <th className="text-left p-3 font-medium">Organisation</th><th className="text-left p-3 font-medium">Type</th>
-            <th className="text-left p-3 font-medium">Status</th><th className="text-left p-3 font-medium">Contact</th>
-            <th className="text-left p-3 font-medium">Agreement</th><th className="text-left p-3 font-medium">Next Action</th>
+          <thead><tr className="border-b">
+            <th className="text-left p-3"><SortableHeader label="Organisation" active={sortKey === 'organisationName'} direction={sortKey === 'organisationName' ? sortDir : null} onClick={() => toggle('organisationName')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Type" active={sortKey === 'type'} direction={sortKey === 'type' ? sortDir : null} onClick={() => toggle('type')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggle('status')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Contact" active={sortKey === 'primaryContactName'} direction={sortKey === 'primaryContactName' ? sortDir : null} onClick={() => toggle('primaryContactName')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Agreement" active={sortKey === 'agreementType'} direction={sortKey === 'agreementType' ? sortDir : null} onClick={() => toggle('agreementType')} /></th>
+            <th className="text-left p-3"><SortableHeader label="Next Action" active={sortKey === 'nextActionDate'} direction={sortKey === 'nextActionDate' ? sortDir : null} onClick={() => toggle('nextActionDate')} /></th>
             <th className="p-3"></th>
           </tr></thead>
           <tbody>
-            {items.map(p => (
+            {sorted.map(p => (
               <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditItem(p)}>
                 <td className="p-3 font-medium text-foreground">{p.organisationName}</td>
                 <td className="p-3 text-xs text-muted-foreground">{p.type}</td>
@@ -67,7 +87,7 @@ export default function Partnerships() {
                 <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">No partnerships yet.</td></tr>}
+            {sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={Handshake} title="No partnerships yet" description="Add your first partnership to start tracking relationships." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Partnership</Button>} /></td></tr>}
           </tbody>
         </table>
       </div>
