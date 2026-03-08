@@ -23,6 +23,7 @@ import LoginPage from "./pages/LoginPage";
 import ChecklistsPage from "./pages/ChecklistsPage";
 import ForecastingPage from "./pages/ForecastingPage";
 import GanttPage from "./pages/GanttPage";
+import WorkflowsPage from "./pages/WorkflowsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
