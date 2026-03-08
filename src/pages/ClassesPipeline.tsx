@@ -50,6 +50,15 @@ export default function ClassesPipeline() {
 
   const handleDelete = (id: string) => { classCRUD.remove(id); setClasses(classCRUD.getAll()); setEditClass(null); };
 
+  const handleKanbanMove = (itemId: string, newStage: string) => {
+    const item = classes.find(c => c.id === itemId);
+    if (item) {
+      const now = new Date().toISOString();
+      classCRUD.update({ ...item, pipelineStage: newStage, updatedAt: now });
+      setClasses(classCRUD.getAll());
+    }
+  };
+
   const handleCSV = () => {
     exportToCSV(classes, 'classes_pipeline', [
       { key: 'title', label: 'Title' }, { key: 'instructorName', label: 'Instructor' },
