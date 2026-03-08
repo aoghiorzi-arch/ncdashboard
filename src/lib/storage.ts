@@ -428,7 +428,7 @@ export const saveSettings = (s: NCSettings) => { setStore('nc_settings', s); not
 export const exportAllData = () => {
   const keys = ['nc_tasks','nc_calendar','nc_classes','nc_instructors','nc_documents',
     'nc_ideas','nc_events','nc_partnerships','nc_expenses','nc_income',
-    'nc_compliance','nc_team','nc_metrics','nc_settings'];
+    'nc_compliance','nc_team','nc_metrics','nc_checklists','nc_settings'];
   const data: Record<string, unknown> = { exportedAt: new Date().toISOString() };
   keys.forEach(k => { data[k] = getStore(k, k === 'nc_settings' ? DEFAULT_SETTINGS : []); });
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
