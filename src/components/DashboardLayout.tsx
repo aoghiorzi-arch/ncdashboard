@@ -49,6 +49,7 @@ const NAV_SECTIONS = [
       { title: 'Team & Roles', path: '/team', icon: UserCog },
       { title: 'Audit Trail', path: '/audit', icon: History },
       { title: 'Settings', path: '/settings', icon: Settings },
+      { title: 'Stakeholder Portal', path: '/portal', icon: ExternalLink },
     ],
   },
 ];
