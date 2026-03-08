@@ -387,9 +387,37 @@ function TaskDialog({
   const [newAttachmentName, setNewAttachmentName] = useState('');
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
 
-  useEffect(() => { setForm(task || blank); }, [task, settings.userName]);
+  useEffect(() => { setForm(task || blank); setNewNote(''); setNewAttachmentName(''); setNewAttachmentUrl(''); }, [task, settings.userName]);
 
   const update = (patch: Partial<Task>) => setForm(f => ({ ...f, ...patch }));
+
+  const addNote = () => {
+    if (!newNote.trim()) return;
+    const note = { id: generateId(), text: newNote.trim(), author: settings.userName, timestamp: new Date().toISOString() };
+    update({ notes: [...(form.notes || []), note] });
+    setNewNote('');
+    if (task) logActivity('commented', 'Tasks', form.title, settings.userName, newNote.trim());
+  };
+
+  const removeNote = (noteId: string) => {
+    update({ notes: (form.notes || []).filter(n => n.id !== noteId) });
+  };
+
+  const addAttachment = () => {
+    if (!newAttachmentName.trim() || !newAttachmentUrl.trim()) return;
+    const att: Attachment = {
+      id: generateId(), name: newAttachmentName.trim(), url: newAttachmentUrl.trim(),
+      type: 'link', addedBy: settings.userName, addedAt: new Date().toISOString(),
+    };
+    update({ attachments: [...(form.attachments || []), att] });
+    setNewAttachmentName('');
+    setNewAttachmentUrl('');
+    if (task) logActivity('attached', 'Tasks', form.title, settings.userName, newAttachmentName.trim());
+  };
+
+  const removeAttachment = (attId: string) => {
+    update({ attachments: (form.attachments || []).filter(a => a.id !== attId) });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
