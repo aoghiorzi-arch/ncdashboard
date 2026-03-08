@@ -117,13 +117,9 @@ export function KanbanBoard<T extends KanbanCard>({
 
             {/* Drop zone indicator when column is empty */}
             {col.length === 0 && isOver && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="border-2 border-dashed border-accent/40 rounded-md p-4 text-center"
-              >
+              <div className="border-2 border-dashed border-accent/40 rounded-md p-4 text-center animate-in fade-in duration-200">
                 <p className="text-[11px] text-accent font-medium">Drop here</p>
-              </motion.div>
+              </div>
             )}
 
             <div className="space-y-2">
