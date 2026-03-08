@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { type LucideIcon } from 'lucide-react';
 
@@ -9,14 +10,14 @@ interface KPICardProps {
   variant?: 'default' | 'success' | 'warn' | 'alert';
 }
 
-const variantStyles = {
+const variantStyles: Record<string, string> = {
   default: 'border-l-accent',
   success: 'border-l-nc-success',
   warn: 'border-l-nc-warn',
   alert: 'border-l-nc-alert',
 };
 
-export function KPICard({ label, value, subtitle, icon: Icon, variant = 'default' }: KPICardProps) {
+export const KPICard = memo(function KPICard({ label, value, subtitle, icon: Icon, variant = 'default' }: KPICardProps) {
   return (
     <div className={cn(
       'bg-card rounded-lg p-5 nc-shadow-card border-l-4 flex items-start gap-4',
@@ -32,4 +33,4 @@ export function KPICard({ label, value, subtitle, icon: Icon, variant = 'default
       </div>
     </div>
   );
-}
+});
