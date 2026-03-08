@@ -22,6 +22,7 @@ import AuditTrail from "./pages/AuditTrail";
 import LoginPage from "./pages/LoginPage";
 import ChecklistsPage from "./pages/ChecklistsPage";
 import ForecastingPage from "./pages/ForecastingPage";
+import GanttPage from "./pages/GanttPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/audit" element={<AuditTrail />} />
             <Route path="/checklists" element={<ChecklistsPage />} />
             <Route path="/forecasting" element={<ForecastingPage />} />
+            <Route path="/gantt" element={<GanttPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />
