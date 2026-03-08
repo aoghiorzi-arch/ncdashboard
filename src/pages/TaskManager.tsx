@@ -17,6 +17,7 @@ import { exportToCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { logActivity } from '@/lib/activityLog';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
+import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
