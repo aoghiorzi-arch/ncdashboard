@@ -277,7 +277,7 @@ export default function TaskManager() {
                       </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && (
+                  {sortedFiltered.length === 0 && (
                     <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No tasks match your filters.</td></tr>
                   )}
                 </tbody>
