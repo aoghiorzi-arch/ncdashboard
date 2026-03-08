@@ -392,6 +392,17 @@ export default function TaskManager() {
               </table>
             </div>
           )}
+
+          {/* Gantt View */}
+          {view === 'gantt' && (
+            <GanttChart
+              items={ganttItems}
+              onItemClick={(item) => {
+                const t = tasks.find(tt => tt.id === item.id);
+                if (t) setEditTask(t);
+              }}
+            />
+          )}
         </>
       )}
 
