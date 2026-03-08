@@ -159,6 +159,19 @@ export default function ChecklistsPage() {
     refresh();
   };
 
+  const [templateView, setTemplateView] = useState(false);
+
+  const applyTemplate = (t: ChecklistTemplate) => {
+    setEditing(null);
+    setTitle(t.title);
+    setDescription(t.description);
+    setColor(t.color);
+    setItems(t.items.map(label => ({ id: generateId(), label, done: false })));
+    setNewItemText('');
+    setTemplateView(false);
+    setDialogOpen(true);
+  };
+
   const toggleItem = (checklistId: string, itemId: string) => {
     const cl = checklists.find(c => c.id === checklistId);
     if (!cl) return;
