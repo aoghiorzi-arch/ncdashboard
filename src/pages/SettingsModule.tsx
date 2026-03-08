@@ -12,6 +12,7 @@ const MODULE_LABELS: Record<string, string> = {
   instructors: 'Instructor CRM', documents: 'Documents', ideas: 'Ideas & Backlog',
   events: 'Events', partnerships: 'Partnerships', expenses: 'Budget & Expenses',
   income: 'Income', compliance: 'Legal & Compliance', team: 'Team & Roles', metrics: 'Platform Metrics',
+  outlookCalendar: 'Outlook Calendar',
 };
 
 export default function SettingsModule() {

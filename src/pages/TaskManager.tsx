@@ -10,7 +10,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3 } from 'lucide-react';
+import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
@@ -379,6 +379,7 @@ function TaskDialog({
     id: '', title: '', description: '', moduleTag: 'General', priority: 'Medium',
     status: 'Not Started', owner: settings.userName, dueDate: '', subtasks: [],
     notes: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
+    recurrence: 'none', recurrenceEndDate: '',
   };
   const [form, setForm] = useState<Task>(blank);
 
@@ -423,6 +424,29 @@ function TaskDialog({
           <div>
             <label className="text-xs font-medium text-muted-foreground">Owner</label>
             <Input className="mt-1" value={form.owner} onChange={e => update({ owner: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Repeat className="w-3 h-3" /> Recurrence
+              </label>
+              <Select value={form.recurrence || 'none'} onValueChange={v => update({ recurrence: v as Task['recurrence'] })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.recurrence && form.recurrence !== 'none' && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Recurrence End Date</label>
+                <Input type="date" className="mt-1" value={form.recurrenceEndDate || ''} onChange={e => update({ recurrenceEndDate: e.target.value })} />
+              </div>
+            )}
           </div>
           {task && (
             <TaskDependencyEditor taskId={task.id} tasks={getTasks()} />

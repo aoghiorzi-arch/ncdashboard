@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getTasks, getExpenses, getSettings, classCRUD, type Task } from '@/lib/storage';
+import { getTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, type Task } from '@/lib/storage';
 import { KPICard } from '@/components/KPICard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { ProjectHealthScore } from '@/components/ProjectHealthScore';
 import { MilestoneTracker } from '@/components/MilestoneTracker';
 import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
 import { StatusReport } from '@/components/StatusReport';
+import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
@@ -70,6 +71,8 @@ export default function DashboardHome() {
       setSettings(getSettings());
     };
     refresh();
+    // Generate any due recurring tasks on load
+    generateRecurringTasks();
     window.addEventListener('nc-data-change', refresh);
     return () => window.removeEventListener('nc-data-change', refresh);
   }, []);
@@ -108,7 +111,11 @@ export default function DashboardHome() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
-      {/* KPI Row */}
+      {/* Header with Report Button */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Dashboard Overview</h2>
+        <StatusReportPDFButton />
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard label="Classes Live" value={publishedClasses} icon={Film} trend={[0, 1, 1, 2, 3, 3, publishedClasses]} />
         <KPICard label="In Production" value={inProduction} icon={Clapperboard} trend={[1, 2, 3, 2, 4, inProduction]} />
