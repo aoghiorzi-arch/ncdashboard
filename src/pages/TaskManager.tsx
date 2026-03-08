@@ -14,6 +14,8 @@ import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { logActivity } from '@/lib/activityLog';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
