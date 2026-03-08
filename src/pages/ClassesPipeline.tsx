@@ -140,13 +140,27 @@ export default function ClassesPipeline() {
           items={classes.map(c => ({ ...c, column: c.pipelineStage }))}
           onMove={handleKanbanMove}
           onCardClick={c => setEditClass(c)}
+          searchFields={['title', 'instructorName', 'category'] as (keyof ClassRecord)[]}
+          searchPlaceholder="Search classes…"
           renderCard={c => {
             const epProgress = c.episodeCountTarget > 0
               ? Math.round((c.episodeCountDelivered / c.episodeCountTarget) * 100)
               : 0;
+            const isOverdue = c.targetPublicationDate && new Date(c.targetPublicationDate) < new Date() && c.pipelineStage !== 'Published' && c.pipelineStage !== 'Archived';
+            const daysInStage = Math.floor((Date.now() - new Date(c.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
             return (
-              <>
-                <p className="text-sm font-medium text-foreground mb-1">{c.title}</p>
+              <div className={cn(isOverdue && 'ring-1 ring-destructive/30 rounded-md -m-1 p-1')}>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-foreground truncate">{c.title}</p>
+                  <span className={cn(
+                    'text-[9px] px-1.5 py-0.5 rounded-full shrink-0 ml-1',
+                    daysInStage > 21 ? 'bg-destructive/10 text-destructive' :
+                    daysInStage > 7 ? 'bg-nc-warn/10 text-nc-warn' :
+                    'bg-muted text-muted-foreground'
+                  )}>
+                    {daysInStage}d
+                  </span>
+                </div>
                 <p className="text-[10px] text-muted-foreground mb-2">{c.instructorName || 'No instructor'}</p>
                 {c.episodeCountTarget > 0 && (
                   <div className="mb-1">
@@ -159,8 +173,9 @@ export default function ClassesPipeline() {
                 )}
                 <div className="flex items-center gap-2">
                   {c.qaTier === 'Elevated' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Elevated QA</span>}
+                  {isOverdue && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">Overdue</span>}
                 </div>
-              </>
+              </div>
             );
           }}
         />

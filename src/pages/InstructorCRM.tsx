@@ -102,15 +102,36 @@ export default function InstructorCRM() {
             items={instructors.map(i => ({ ...i, column: i.status }))}
             onMove={handleKanbanMove}
             onCardClick={inst => setEditItem(inst)}
-            renderCard={inst => (
-              <>
-                <p className="text-sm font-medium text-foreground">{inst.fullName}</p>
-                <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
-                </div>
-              </>
-            )}
+            searchFields={['fullName', 'specialism', 'institution', 'tags'] as (keyof Instructor)[]}
+            searchPlaceholder="Search instructors…"
+            renderCard={inst => {
+              const initials = inst.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+              const daysSinceUpdate = Math.floor((Date.now() - new Date(inst.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+              return (
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[9px] font-bold shrink-0">
+                      {initials}
+                    </div>
+                    <p className="text-sm font-medium text-foreground truncate">{inst.fullName}</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
+                    </div>
+                    <span className={cn(
+                      'text-[9px] px-1.5 py-0.5 rounded-full',
+                      daysSinceUpdate > 30 ? 'bg-destructive/10 text-destructive' :
+                      daysSinceUpdate > 14 ? 'bg-nc-warn/10 text-nc-warn' :
+                      'bg-muted text-muted-foreground'
+                    )}>
+                      {daysSinceUpdate}d
+                    </span>
+                  </div>
+                </>
+              );
+            }}
           />
         )
       )}
