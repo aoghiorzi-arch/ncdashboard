@@ -8,7 +8,7 @@ import {
   Shield, UserCog, CalendarDays, Settings, Globe, ShieldCheck,
   Flag, FileText, Link2, Users2, Moon, Upload, Download,
   Repeat, MessageSquare, Paperclip, Bell, History, LayoutGrid,
-  Mail, Lock,
+  Mail, Lock, ClipboardList, Zap, TrendingUp, ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -91,6 +91,31 @@ const CORE_MODULES: HelpSection[] = [
     id: 'audit', icon: History, title: 'Audit Trail',
     content: 'Full activity log of all changes across the dashboard. Search by keyword, filter by module or action type. Entries are grouped by date and show who did what, when. Tracks creates, updates, deletes, comments, attachments, and status changes.',
     link: '/audit', linkLabel: 'Go to Audit Trail',
+  },
+  {
+    id: 'checklists', icon: ClipboardList, title: 'Checklists',
+    content: 'Create unlimited personalised checklists with colour-coded headers, descriptions, and progress tracking. Use **templates** (Launch Readiness, Team Onboarding, Weekly Review, Event Planning) to get started quickly, or build from scratch. Tick items off from the dashboard widget or the dedicated Checklists page.',
+    link: '/checklists', linkLabel: 'Go to Checklists',
+  },
+  {
+    id: 'workflows', icon: Zap, title: 'Automated Workflows',
+    content: 'No-code automation rules that trigger actions when your data changes. Set triggers like "When a class reaches Final QA" and define actions: **Create Checklist**, **Create Task**, or **Send Notification**. Use dynamic `{title}` variables in action text. Browse **presets** for common rules or build custom ones. View the **execution log** to track what fired and when. Enable/disable individual workflows with a toggle.',
+    link: '/workflows', linkLabel: 'Go to Workflows',
+  },
+  {
+    id: 'forecasting', icon: TrendingUp, title: 'Predictive Analytics',
+    content: 'Forecasting dashboard with four key predictions: **Projected Completion** (based on velocity), **Budget Runway** (months until depletion), **Weekly Velocity** (tasks/week vs target), and **Completion Rate**. Charts show 8-week velocity trends and budget projections. **Early warning alerts** flag schedule slippage, budget risks, blocked tasks, and zero-velocity periods. Module completion breakdown shows progress by department.',
+    link: '/forecasting', linkLabel: 'Go to Forecasting',
+  },
+  {
+    id: 'interactive-gantt', icon: CalendarDays, title: 'Interactive Gantt Chart',
+    content: 'Full-page interactive Gantt chart with **drag-to-reschedule** — grab any task bar and slide it to a new date. Dependent tasks **auto-cascade** when you move a blocker. Toggle **Critical Path** to highlight the longest dependency chain in red. Dependency arrows connect blocker → blocked tasks. Today and Launch date markers provide context. Tasks are colour-coded by status with priority rings and overdue pulse animations.',
+    link: '/gantt', linkLabel: 'Go to Gantt Chart',
+  },
+  {
+    id: 'portal', icon: ExternalLink, title: 'Stakeholder Portal',
+    content: 'Read-only branded view for external partners, funders, and board members at **/portal**. Shows curated KPIs (health, days to launch, tasks, classes, budget), health breakdown with circular score, content pipeline stages, upcoming events, and partnership summary. No sidebar or admin controls — just a clean, shareable progress report. Share the URL directly with stakeholders.',
+    link: '/portal', linkLabel: 'Open Portal',
   },
 ];
 
@@ -359,6 +384,11 @@ export function DashboardHelp() {
                 <li>💡 Set tasks to **recur** automatically — complete one, and the next instance appears</li>
                 <li>💡 Create milestones linked to module tags — progress auto-calculates from task completion</li>
                 <li>💡 Visit the **Audit Trail** to see a full history of all changes across the dashboard</li>
+                <li>💡 Create **checklists** from templates — Launch Readiness, Onboarding, Weekly Review, and more</li>
+                <li>💡 Set up **automated workflows** to auto-create checklists or tasks when data changes</li>
+                <li>💡 Check **Predictive Analytics** for launch projections and budget runway forecasts</li>
+                <li>💡 Use the **Interactive Gantt** to drag tasks to new dates — dependencies cascade automatically</li>
+                <li>💡 Share the **/portal** URL with stakeholders for a branded read-only progress view</li>
               </ul>
             </div>
           </div>
