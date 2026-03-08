@@ -1,7 +1,7 @@
 /**
  * CSV export utility — converts an array of objects into a downloadable CSV file.
  */
-export function exportToCSV<T extends Record<string, unknown>>(
+export function exportToCSV<T extends object>(
   data: T[],
   filename: string,
   columns?: { key: keyof T; label: string }[]
