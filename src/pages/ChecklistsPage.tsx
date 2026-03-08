@@ -20,6 +20,72 @@ const COLORS = [
   'hsl(260, 50%, 50%)',
 ];
 
+interface ChecklistTemplate {
+  title: string;
+  description: string;
+  color: string;
+  items: string[];
+}
+
+const TEMPLATES: ChecklistTemplate[] = [
+  {
+    title: 'Launch Readiness',
+    description: 'Pre-launch checklist to ensure everything is ready',
+    color: 'hsl(var(--destructive))',
+    items: [
+      'Legal & compliance review complete',
+      'All content proofread and approved',
+      'Technical QA passed',
+      'Marketing materials ready',
+      'Payment systems tested',
+      'Support team briefed',
+      'Analytics tracking verified',
+      'Rollback plan documented',
+    ],
+  },
+  {
+    title: 'Team Onboarding',
+    description: 'Steps for onboarding a new team member',
+    color: 'hsl(160, 50%, 40%)',
+    items: [
+      'Send welcome email with login credentials',
+      'Schedule intro call with team lead',
+      'Grant access to tools & platforms',
+      'Share brand guidelines & docs',
+      'Assign first-week buddy',
+      'Set up recurring 1:1 meetings',
+      'Complete HR paperwork',
+    ],
+  },
+  {
+    title: 'Weekly Review',
+    description: 'End-of-week review routine',
+    color: 'hsl(var(--primary))',
+    items: [
+      'Review task completion vs. plan',
+      'Update budget tracker',
+      'Check upcoming deadlines',
+      'Prepare status report highlights',
+      'Flag blockers for next week',
+      'Celebrate wins with the team',
+    ],
+  },
+  {
+    title: 'Event Planning',
+    description: 'Checklist for organising an event or workshop',
+    color: 'hsl(260, 50%, 50%)',
+    items: [
+      'Confirm venue / virtual platform',
+      'Send invitations & collect RSVPs',
+      'Prepare agenda & materials',
+      'Arrange catering or refreshments',
+      'Test AV / tech equipment',
+      'Assign roles (host, moderator, etc.)',
+      'Send post-event follow-up',
+    ],
+  },
+];
+
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
