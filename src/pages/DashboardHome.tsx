@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { getTasks, getExpenses, getSettings, classCRUD, type Task } from '@/lib/storage';
 import { KPICard } from '@/components/KPICard';
 import { ActivityFeed } from '@/components/ActivityFeed';
+import { ProjectHealthScore } from '@/components/ProjectHealthScore';
+import { MilestoneTracker } from '@/components/MilestoneTracker';
+import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
+import { StatusReport } from '@/components/StatusReport';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
@@ -131,6 +135,16 @@ export default function DashboardHome() {
           trend={[settings.totalBudget, settings.totalBudget - totalExpenses * 0.3, settings.totalBudget - totalExpenses * 0.6, settings.totalBudget - totalExpenses]}
         />
       </div>
+
+      {/* Project Health + Milestones + Weekly Digest */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <ProjectHealthScore />
+        <MilestoneTracker />
+        <StatusReport />
+      </div>
+
+      {/* Workload Heatmap */}
+      <WorkloadHeatmap />
 
       {/* Weekly Digest */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

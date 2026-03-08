@@ -17,6 +17,7 @@ import { exportToCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { logActivity } from '@/lib/activityLog';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
+import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
@@ -209,6 +210,7 @@ export default function TaskManager() {
                         </p>
                       </div>
                     )}
+                    <DependencyBadge taskId={task.id} tasks={tasks} />
                   </div>
                 );
               }}
@@ -422,6 +424,9 @@ function TaskDialog({
             <label className="text-xs font-medium text-muted-foreground">Owner</label>
             <Input className="mt-1" value={form.owner} onChange={e => update({ owner: e.target.value })} />
           </div>
+          {task && (
+            <TaskDependencyEditor taskId={task.id} tasks={getTasks()} />
+          )}
           <Button
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
             onClick={() => { if (form.title.trim()) onSave(form); }}
