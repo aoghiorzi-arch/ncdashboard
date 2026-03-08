@@ -60,7 +60,11 @@ export default function TaskManager() {
     ));
   };
 
-  const deleteTaskById = (id: string) => { persist(tasks.filter(t => t.id !== id)); };
+  const deleteTaskById = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) logActivity('deleted', 'Tasks', task.title, getSettings().userName);
+    persist(tasks.filter(t => t.id !== id));
+  };
 
   const filtered = tasks.filter(t => {
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
