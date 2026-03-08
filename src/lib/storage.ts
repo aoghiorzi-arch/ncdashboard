@@ -414,6 +414,7 @@ export const incomeCRUD = createCRUD<Income>('nc_income');
 export const complianceCRUD = createCRUD<ComplianceItem>('nc_compliance');
 export const teamCRUD = createCRUD<TeamMember>('nc_team');
 export const metricCRUD = createCRUD<MetricEntry>('nc_metrics');
+export const checklistCRUD = createCRUD<Checklist>('nc_checklists');
 
 // Legacy compat
 export const getExpenses = (): Expense[] => expenseCRUD.getAll();
