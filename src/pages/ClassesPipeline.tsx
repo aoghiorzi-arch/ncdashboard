@@ -30,6 +30,7 @@ export default function ClassesPipeline() {
   const [classes, setClasses] = useState<ClassRecord[]>([]);
   const [editClass, setEditClass] = useState<ClassRecord | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'pipeline' | 'gantt'>('pipeline');
 
   useEffect(() => {
     const refresh = () => setClasses(classCRUD.getAll());
