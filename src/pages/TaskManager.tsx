@@ -42,7 +42,7 @@ const priorityBadge: Record<string, string> = {
 
 export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>(getTasks);
-  const [view, setView] = useState<'board' | 'list' | 'swimlane'>('board');
+  const [view, setView] = useState<'board' | 'list' | 'swimlane' | 'gantt'>('board');
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
