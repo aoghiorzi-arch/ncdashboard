@@ -253,6 +253,7 @@ const DEFAULT_SHAREPOINT: SharePointConfig = {
     tasks: '', calendar: '', classes: '', instructors: '',
     documents: '', ideas: '', events: '', partnerships: '',
     expenses: '', income: '', compliance: '', team: '', metrics: '',
+    outlookCalendar: '',
   },
 };
 
