@@ -155,7 +155,7 @@ export default function TaskManager() {
     <div className="max-w-[1400px] mx-auto space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant={view === 'board' ? 'default' : 'outline'} size="sm" onClick={() => setView('board')}>
             <LayoutGrid className="w-4 h-4 mr-1" /> Board
           </Button>
@@ -164,6 +164,9 @@ export default function TaskManager() {
           </Button>
           <Button variant={view === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setView('list')}>
             <List className="w-4 h-4 mr-1" /> List
+          </Button>
+          <Button variant={view === 'gantt' ? 'default' : 'outline'} size="sm" onClick={() => setView('gantt')}>
+            <BarChart3 className="w-4 h-4 mr-1" /> Gantt
           </Button>
         </div>
 
@@ -182,6 +185,9 @@ export default function TaskManager() {
               {PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={handleCSVImport} title="Import CSV">
+            <Upload className="w-4 h-4" />
+          </Button>
           <Button variant="outline" size="sm" onClick={handleCSVExport} title="Export CSV">
             <Download className="w-4 h-4" />
           </Button>
