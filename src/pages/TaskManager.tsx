@@ -210,24 +210,36 @@ export default function TaskManager() {
             <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-muted-foreground border-b">
+                  <tr className="border-b">
                     <th className="p-3 w-8">
                       <Checkbox
-                        checked={selected.size === filtered.length && filtered.length > 0}
+                        checked={selected.size === sortedFiltered.length && sortedFiltered.length > 0}
                         onCheckedChange={toggleSelectAll}
                       />
                     </th>
-                    <th className="text-left p-3 font-medium">Task</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Priority</th>
-                    <th className="text-left p-3 font-medium hidden md:table-cell">Module</th>
-                    <th className="text-left p-3 font-medium hidden sm:table-cell">Owner</th>
-                    <th className="text-left p-3 font-medium">Due</th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Task" active={sortKey === 'title'} direction={sortKey === 'title' ? sortDir : null} onClick={() => toggleSort('title')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggleSort('status')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Priority" active={sortKey === 'priority'} direction={sortKey === 'priority' ? sortDir : null} onClick={() => toggleSort('priority')} />
+                    </th>
+                    <th className="text-left p-3 hidden md:table-cell">
+                      <SortableHeader label="Module" active={sortKey === 'moduleTag'} direction={sortKey === 'moduleTag' ? sortDir : null} onClick={() => toggleSort('moduleTag')} />
+                    </th>
+                    <th className="text-left p-3 hidden sm:table-cell">
+                      <SortableHeader label="Owner" active={sortKey === 'owner'} direction={sortKey === 'owner' ? sortDir : null} onClick={() => toggleSort('owner')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Due" active={sortKey === 'dueDate'} direction={sortKey === 'dueDate' ? sortDir : null} onClick={() => toggleSort('dueDate')} />
+                    </th>
                     <th className="p-3"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(task => (
+                  {sortedFiltered.map(task => (
                     <tr
                       key={task.id}
                       className={cn(
