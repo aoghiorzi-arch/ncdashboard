@@ -93,6 +93,12 @@ export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
+  useEffect(() => {
+    const handler = () => setQuickAddOpen(true);
+    window.addEventListener('nc-quick-add', handler);
+    return () => window.removeEventListener('nc-quick-add', handler);
+  }, []);
+
   const currentModule = NAV_SECTIONS
     .flatMap(s => s.items)
     .find(i => i.path === location.pathname)?.title || 'Dashboard';
