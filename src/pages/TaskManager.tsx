@@ -11,13 +11,15 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X } from 'lucide-react';
+import { LayoutGrid, List, Plus, Trash2, Download, Upload, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
-import { exportToCSV } from '@/lib/csv';
+import { exportToCSV, importCSVFile, parseCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
+import { GanttChart, type GanttItem } from '@/components/GanttChart';
+import { toast } from 'sonner';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
