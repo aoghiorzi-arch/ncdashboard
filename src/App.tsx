@@ -21,6 +21,7 @@ import SettingsModule from "./pages/SettingsModule";
 import AuditTrail from "./pages/AuditTrail";
 import LoginPage from "./pages/LoginPage";
 import ChecklistsPage from "./pages/ChecklistsPage";
+import ForecastingPage from "./pages/ForecastingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
