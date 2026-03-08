@@ -384,6 +384,11 @@ export function DashboardHelp() {
                 <li>💡 Set tasks to **recur** automatically — complete one, and the next instance appears</li>
                 <li>💡 Create milestones linked to module tags — progress auto-calculates from task completion</li>
                 <li>💡 Visit the **Audit Trail** to see a full history of all changes across the dashboard</li>
+                <li>💡 Create **checklists** from templates — Launch Readiness, Onboarding, Weekly Review, and more</li>
+                <li>💡 Set up **automated workflows** to auto-create checklists or tasks when data changes</li>
+                <li>💡 Check **Predictive Analytics** for launch projections and budget runway forecasts</li>
+                <li>💡 Use the **Interactive Gantt** to drag tasks to new dates — dependencies cascade automatically</li>
+                <li>💡 Share the **/portal** URL with stakeholders for a branded read-only progress view</li>
               </ul>
             </div>
           </div>
