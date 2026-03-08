@@ -4,10 +4,12 @@ import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
   FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
   BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Bell, Plus,
+  Search, Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickAddDialog } from './QuickAddDialog';
+import { GlobalSearch } from './GlobalSearch';
+import { NotificationsPanel } from './NotificationsPanel';
 
 const NAV_SECTIONS = [
   {
