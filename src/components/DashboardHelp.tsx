@@ -8,7 +8,7 @@ import {
   Shield, UserCog, CalendarDays, Settings, Globe, ShieldCheck,
   Flag, FileText, Link2, Users2, Moon, Upload, Download,
   Repeat, MessageSquare, Paperclip, Bell, History, LayoutGrid,
-  Mail, Lock, ClipboardList, Zap, TrendingUp, ExternalLink, GanttChart,
+  Mail, Lock, ClipboardList, Zap, TrendingUp, ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
