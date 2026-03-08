@@ -173,6 +173,7 @@ export function DashboardLayout() {
 
         {/* Content with animation */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <Breadcrumbs />
           <AnimatedPage>
             <Outlet />
           </AnimatedPage>
