@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/team" element={<TeamRoles />} />
             <Route path="/settings" element={<SettingsModule />} />
           </Route>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
