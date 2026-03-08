@@ -20,6 +20,7 @@ import TeamRoles from "./pages/TeamRoles";
 import SettingsModule from "./pages/SettingsModule";
 import AuditTrail from "./pages/AuditTrail";
 import LoginPage from "./pages/LoginPage";
+import ChecklistsPage from "./pages/ChecklistsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/team" element={<TeamRoles />} />
             <Route path="/settings" element={<SettingsModule />} />
             <Route path="/audit" element={<AuditTrail />} />
+            <Route path="/checklists" element={<ChecklistsPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />

@@ -9,6 +9,7 @@ import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
 import { StatusReport } from '@/components/StatusReport';
 import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import { WidgetCustomizer } from '@/components/WidgetCustomizer';
+import { ChecklistWidget } from '@/components/ChecklistWidget';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
@@ -319,6 +320,8 @@ export default function DashboardHome() {
         <ActivityFeed limit={10} />
       </div>
     ),
+
+    checklists: <ChecklistWidget key="checklists" />,
   };
 
   // Grouped widgets that render together
@@ -370,18 +373,21 @@ export default function DashboardHome() {
           rendered.add('agenda');
           rendered.add('alerts');
         }
-      } else if (['recentTasks', 'activityFeed'].includes(id)) {
-        if (!rendered.has('recentTasks') && !rendered.has('activityFeed')) {
-          const visibleInGroup = ['recentTasks', 'activityFeed'].filter(isVisible);
+      } else if (['recentTasks', 'activityFeed', 'checklists'].includes(id)) {
+        if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists')) {
+          const visibleInGroup = ['recentTasks', 'activityFeed', 'checklists'].filter(isVisible);
           if (visibleInGroup.length > 0) {
             sections.push(
-              <div key="bottomRow" className={cn('grid gap-4 sm:gap-6', visibleInGroup.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : '')}>
+              <div key="bottomRow" className={cn('grid gap-4 sm:gap-6', 
+                visibleInGroup.length >= 3 ? 'grid-cols-1 lg:grid-cols-3' :
+                visibleInGroup.length === 2 ? 'grid-cols-1 lg:grid-cols-2' : '')}>
                 {visibleInGroup.map(wid => widgetComponents[wid])}
               </div>
             );
           }
           rendered.add('recentTasks');
           rendered.add('activityFeed');
+          rendered.add('checklists');
         }
       } else {
         sections.push(renderWidget(id));

@@ -17,6 +17,7 @@ const WIDGET_LABELS: Record<string, string> = {
   burndown: 'Budget Burn-down Chart',
   recentTasks: 'Recent Tasks',
   activityFeed: 'Recent Activity',
+  checklists: 'Checklists',
 };
 
 export function WidgetCustomizer() {

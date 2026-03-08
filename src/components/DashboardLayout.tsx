@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
   FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
   BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Plus, Menu, X, History,
+  Search, Plus, Menu, X, History, ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickAddDialog } from './QuickAddDialog';
@@ -28,6 +28,7 @@ const NAV_SECTIONS = [
     label: 'Operations',
     items: [
       { title: 'Tasks', path: '/tasks', icon: CheckSquare },
+      { title: 'Checklists', path: '/checklists', icon: ClipboardList },
       { title: 'Classes Pipeline', path: '/classes', icon: Film },
       { title: 'Instructor CRM', path: '/instructors', icon: Users },
       { title: 'Documents', path: '/documents', icon: FolderOpen },

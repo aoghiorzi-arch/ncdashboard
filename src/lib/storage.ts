@@ -218,6 +218,22 @@ export interface TeamMember {
   updatedAt: string;
 }
 
+export interface ChecklistItem {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+export interface Checklist {
+  id: string;
+  title: string;
+  description: string;
+  items: ChecklistItem[];
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MetricEntry {
   id: string;
   date: string;
@@ -288,6 +304,7 @@ export const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'burndown', visible: true },
   { id: 'recentTasks', visible: true },
   { id: 'activityFeed', visible: true },
+  { id: 'checklists', visible: true },
 ];
 
 const DEFAULT_SETTINGS: NCSettings = {
@@ -398,6 +415,7 @@ export const incomeCRUD = createCRUD<Income>('nc_income');
 export const complianceCRUD = createCRUD<ComplianceItem>('nc_compliance');
 export const teamCRUD = createCRUD<TeamMember>('nc_team');
 export const metricCRUD = createCRUD<MetricEntry>('nc_metrics');
+export const checklistCRUD = createCRUD<Checklist>('nc_checklists');
 
 // Legacy compat
 export const getExpenses = (): Expense[] => expenseCRUD.getAll();
@@ -411,7 +429,7 @@ export const saveSettings = (s: NCSettings) => { setStore('nc_settings', s); not
 export const exportAllData = () => {
   const keys = ['nc_tasks','nc_calendar','nc_classes','nc_instructors','nc_documents',
     'nc_ideas','nc_events','nc_partnerships','nc_expenses','nc_income',
-    'nc_compliance','nc_team','nc_metrics','nc_settings'];
+    'nc_compliance','nc_team','nc_metrics','nc_checklists','nc_settings'];
   const data: Record<string, unknown> = { exportedAt: new Date().toISOString() };
   keys.forEach(k => { data[k] = getStore(k, k === 'nc_settings' ? DEFAULT_SETTINGS : []); });
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
