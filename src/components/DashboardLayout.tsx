@@ -12,6 +12,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
 import { AnimatedPage } from './AnimatedPage';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { DashboardHelp } from './DashboardHelp';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -191,6 +192,7 @@ export function DashboardLayout() {
       <QuickAddDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
       <GlobalSearch />
       <KeyboardShortcuts />
+      <DashboardHelp />
     </div>
   );
 }
