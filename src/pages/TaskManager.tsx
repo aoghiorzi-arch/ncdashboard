@@ -11,13 +11,15 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X } from 'lucide-react';
+import { LayoutGrid, List, Plus, Trash2, Download, Upload, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
-import { exportToCSV } from '@/lib/csv';
+import { exportToCSV, importCSVFile, parseCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
+import { GanttChart, type GanttItem } from '@/components/GanttChart';
+import { toast } from 'sonner';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
@@ -40,7 +42,7 @@ const priorityBadge: Record<string, string> = {
 
 export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>(getTasks);
-  const [view, setView] = useState<'board' | 'list' | 'swimlane'>('board');
+  const [view, setView] = useState<'board' | 'list' | 'swimlane' | 'gantt'>('board');
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -109,11 +111,51 @@ export default function TaskManager() {
     ]);
   };
 
+  const handleCSVImport = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast.error('No data found in CSV'); return; }
+      const now = new Date().toISOString();
+      const user = getSettings().userName;
+      const imported: Task[] = rows.map(row => ({
+        id: generateId(),
+        title: row['Title'] || row['title'] || 'Untitled',
+        description: row['Description'] || row['description'] || '',
+        moduleTag: (row['Module'] || row['moduleTag'] || 'General') as Task['moduleTag'],
+        priority: (row['Priority'] || row['priority'] || 'Medium') as Task['priority'],
+        status: (row['Status'] || row['status'] || 'Not Started') as Task['status'],
+        owner: row['Owner'] || row['owner'] || user,
+        dueDate: row['Due Date'] || row['dueDate'] || '',
+        subtasks: [], notes: [], attachments: [], pinned: false,
+        createdBy: user, createdAt: now, updatedAt: now,
+        recurrence: 'none', recurrenceEndDate: '',
+      }));
+      persist([...tasks, ...imported]);
+      imported.forEach(t => logActivity('created', 'Tasks', t.title, user));
+      toast.success(`Imported ${imported.length} tasks from CSV`);
+    } catch {
+      toast.error('CSV import cancelled or failed');
+    }
+  };
+
+  const ganttItems: GanttItem[] = filtered
+    .filter(t => t.dueDate)
+    .map(t => ({
+      id: t.id,
+      title: t.title,
+      startDate: t.createdAt ? t.createdAt.split('T')[0] : t.dueDate,
+      endDate: t.dueDate,
+      stage: t.status,
+      progress: t.status === 'Complete' ? 100 : t.status === 'In Review' ? 75 : t.status === 'In Progress' ? 40 : t.status === 'Blocked' ? 20 : 0,
+      color: t.status === 'Complete' ? 'bg-nc-success' : t.status === 'Blocked' ? 'bg-destructive' : t.priority === 'Critical' ? 'bg-destructive/80' : 'bg-accent',
+    }));
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant={view === 'board' ? 'default' : 'outline'} size="sm" onClick={() => setView('board')}>
             <LayoutGrid className="w-4 h-4 mr-1" /> Board
           </Button>
@@ -122,6 +164,9 @@ export default function TaskManager() {
           </Button>
           <Button variant={view === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setView('list')}>
             <List className="w-4 h-4 mr-1" /> List
+          </Button>
+          <Button variant={view === 'gantt' ? 'default' : 'outline'} size="sm" onClick={() => setView('gantt')}>
+            <BarChart3 className="w-4 h-4 mr-1" /> Gantt
           </Button>
         </div>
 
@@ -140,6 +185,9 @@ export default function TaskManager() {
               {PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={handleCSVImport} title="Import CSV">
+            <Upload className="w-4 h-4" />
+          </Button>
           <Button variant="outline" size="sm" onClick={handleCSVExport} title="Export CSV">
             <Download className="w-4 h-4" />
           </Button>
@@ -343,6 +391,17 @@ export default function TaskManager() {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Gantt View */}
+          {view === 'gantt' && (
+            <GanttChart
+              items={ganttItems}
+              onItemClick={(item) => {
+                const t = tasks.find(tt => tt.id === item.id);
+                if (t) setEditTask(t);
+              }}
+            />
           )}
         </>
       )}

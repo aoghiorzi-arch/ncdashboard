@@ -28,3 +28,65 @@ export function exportToCSV<T extends object>(
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * CSV import utility — parses a CSV string into an array of objects.
+ * First row is treated as headers.
+ */
+export function parseCSV(csvText: string): Record<string, string>[] {
+  const lines = csvText.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  const parseRow = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const headers = parseRow(lines[0]);
+  return lines.slice(1).map(line => {
+    const values = parseRow(line);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = values[i] || ''; });
+    return obj;
+  });
+}
+
+/**
+ * Trigger file picker and return CSV text content.
+ */
+export function importCSVFile(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) { reject(new Error('No file selected')); return; }
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+}
