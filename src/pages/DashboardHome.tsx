@@ -71,6 +71,8 @@ export default function DashboardHome() {
       setSettings(getSettings());
     };
     refresh();
+    // Generate any due recurring tasks on load
+    generateRecurringTasks();
     window.addEventListener('nc-data-change', refresh);
     return () => window.removeEventListener('nc-data-change', refresh);
   }, []);
