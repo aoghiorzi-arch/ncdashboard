@@ -50,6 +50,7 @@ const App = () => (
             <Route path="/settings" element={<SettingsModule />} />
             <Route path="/audit" element={<AuditTrail />} />
             <Route path="/checklists" element={<ChecklistsPage />} />
+            <Route path="/forecasting" element={<ForecastingPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />

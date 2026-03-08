@@ -42,6 +42,7 @@ const NAV_SECTIONS = [
     items: [
       { title: 'Budget & Expenses', path: '/budget', icon: PiggyBank },
       { title: 'Platform Metrics', path: '/metrics', icon: BarChart3 },
+      { title: 'Forecasting', path: '/forecasting', icon: TrendingUp },
       { title: 'Legal & Compliance', path: '/legal', icon: Shield },
       { title: 'Team & Roles', path: '/team', icon: UserCog },
       { title: 'Audit Trail', path: '/audit', icon: History },
