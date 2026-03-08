@@ -11,7 +11,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat } from 'lucide-react';
+import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
