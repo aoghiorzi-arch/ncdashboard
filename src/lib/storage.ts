@@ -218,6 +218,22 @@ export interface TeamMember {
   updatedAt: string;
 }
 
+export interface ChecklistItem {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+export interface Checklist {
+  id: string;
+  title: string;
+  description: string;
+  items: ChecklistItem[];
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MetricEntry {
   id: string;
   date: string;
