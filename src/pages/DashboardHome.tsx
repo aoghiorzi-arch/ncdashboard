@@ -9,6 +9,7 @@ import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
 import { StatusReport } from '@/components/StatusReport';
 import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import { WidgetCustomizer } from '@/components/WidgetCustomizer';
+import { ChecklistWidget } from '@/components/ChecklistWidget';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
