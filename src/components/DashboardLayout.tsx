@@ -43,6 +43,7 @@ const NAV_SECTIONS = [
       { title: 'Platform Metrics', path: '/metrics', icon: BarChart3 },
       { title: 'Legal & Compliance', path: '/legal', icon: Shield },
       { title: 'Team & Roles', path: '/team', icon: UserCog },
+      { title: 'Audit Trail', path: '/audit', icon: History },
       { title: 'Settings', path: '/settings', icon: Settings },
     ],
   },

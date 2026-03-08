@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/legal" element={<LegalCompliance />} />
             <Route path="/team" element={<TeamRoles />} />
             <Route path="/settings" element={<SettingsModule />} />
+            <Route path="/audit" element={<AuditTrail />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />
