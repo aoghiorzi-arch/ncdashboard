@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getActivityLog, type ActivityEntry } from '@/lib/activityLog';
-import { Activity, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Activity, Plus, Pencil, Trash2, MessageSquare, Paperclip, ArrowRightLeft, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -8,12 +8,20 @@ const actionIcons: Record<string, React.ElementType> = {
   created: Plus,
   updated: Pencil,
   deleted: Trash2,
+  commented: MessageSquare,
+  attached: Paperclip,
+  status_changed: ArrowRightLeft,
+  completed: CheckCircle2,
 };
 
 const actionColors: Record<string, string> = {
   created: 'bg-nc-success/10 text-nc-success',
   updated: 'bg-accent/10 text-accent',
   deleted: 'bg-destructive/10 text-destructive',
+  commented: 'bg-primary/10 text-primary',
+  attached: 'bg-secondary text-secondary-foreground',
+  status_changed: 'bg-accent/10 text-accent',
+  completed: 'bg-nc-success/10 text-nc-success',
 };
 
 export function ActivityFeed({ limit = 15 }: { limit?: number }) {

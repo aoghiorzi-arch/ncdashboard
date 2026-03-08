@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTasks, saveTasks, generateId, getSettings, type Task } from '@/lib/storage';
+import { getTasks, saveTasks, generateId, getSettings, type Task, type Attachment } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,12 +11,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat } from 'lucide-react';
+import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare, Rows3, Repeat, MessageSquare, Paperclip, ExternalLink, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
-import { logActivity } from '@/lib/activityLog';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 
@@ -378,14 +378,45 @@ function TaskDialog({
   const blank: Task = {
     id: '', title: '', description: '', moduleTag: 'General', priority: 'Medium',
     status: 'Not Started', owner: settings.userName, dueDate: '', subtasks: [],
-    notes: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
+    notes: [], attachments: [], pinned: false, createdBy: settings.userName, createdAt: '', updatedAt: '',
     recurrence: 'none', recurrenceEndDate: '',
   };
   const [form, setForm] = useState<Task>(blank);
+  const [newNote, setNewNote] = useState('');
+  const [newAttachmentName, setNewAttachmentName] = useState('');
+  const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
 
-  useEffect(() => { setForm(task || blank); }, [task, settings.userName]);
+  useEffect(() => { setForm(task || blank); setNewNote(''); setNewAttachmentName(''); setNewAttachmentUrl(''); }, [task, settings.userName]);
 
   const update = (patch: Partial<Task>) => setForm(f => ({ ...f, ...patch }));
+
+  const addNote = () => {
+    if (!newNote.trim()) return;
+    const note = { id: generateId(), text: newNote.trim(), author: settings.userName, timestamp: new Date().toISOString() };
+    update({ notes: [...(form.notes || []), note] });
+    setNewNote('');
+    if (task) logActivity('commented', 'Tasks', form.title, settings.userName, newNote.trim());
+  };
+
+  const removeNote = (noteId: string) => {
+    update({ notes: (form.notes || []).filter(n => n.id !== noteId) });
+  };
+
+  const addAttachment = () => {
+    if (!newAttachmentName.trim() || !newAttachmentUrl.trim()) return;
+    const att: Attachment = {
+      id: generateId(), name: newAttachmentName.trim(), url: newAttachmentUrl.trim(),
+      type: 'link', addedBy: settings.userName, addedAt: new Date().toISOString(),
+    };
+    update({ attachments: [...(form.attachments || []), att] });
+    setNewAttachmentName('');
+    setNewAttachmentUrl('');
+    if (task) logActivity('attached', 'Tasks', form.title, settings.userName, newAttachmentName.trim());
+  };
+
+  const removeAttachment = (attId: string) => {
+    update({ attachments: (form.attachments || []).filter(a => a.id !== attId) });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -451,6 +482,99 @@ function TaskDialog({
           {task && (
             <TaskDependencyEditor taskId={task.id} tasks={getTasks()} />
           )}
+
+          {/* Comments / Notes */}
+          {task && (
+            <div className="border-t border-border pt-4">
+              <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-3">
+                <MessageSquare className="w-3.5 h-3.5 text-accent" />
+                Comments ({(form.notes || []).length})
+              </h4>
+              {(form.notes || []).length > 0 && (
+                <div className="space-y-2 mb-3 max-h-[200px] overflow-y-auto">
+                  {(form.notes || []).map(note => (
+                    <div key={note.id} className="bg-muted/50 rounded-md p-2.5 group relative">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold text-foreground">{note.author}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] text-muted-foreground">
+                            {new Date(note.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button onClick={() => removeNote(note.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-foreground">{note.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a comment..."
+                  className="text-xs h-8"
+                  value={newNote}
+                  onChange={e => setNewNote(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addNote(); }}
+                />
+                <Button size="sm" variant="outline" className="h-8 shrink-0" onClick={addNote} disabled={!newNote.trim()}>
+                  Add
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {task && (
+            <div className="border-t border-border pt-4">
+              <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-3">
+                <Paperclip className="w-3.5 h-3.5 text-accent" />
+                Attachments ({(form.attachments || []).length})
+              </h4>
+              {(form.attachments || []).length > 0 && (
+                <div className="space-y-1.5 mb-3">
+                  {(form.attachments || []).map(att => (
+                    <div key={att.id} className="flex items-center justify-between bg-muted/50 rounded-md px-3 py-2 group">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Paperclip className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-accent hover:underline truncate">
+                          {att.name}
+                        </a>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-muted-foreground">{att.addedBy}</span>
+                        <button onClick={() => removeAttachment(att.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="File name"
+                  className="text-xs h-8 flex-1"
+                  value={newAttachmentName}
+                  onChange={e => setNewAttachmentName(e.target.value)}
+                />
+                <Input
+                  placeholder="URL / SharePoint link"
+                  className="text-xs h-8 flex-[2]"
+                  value={newAttachmentUrl}
+                  onChange={e => setNewAttachmentUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addAttachment(); }}
+                />
+                <Button size="sm" variant="outline" className="h-8 shrink-0" onClick={addAttachment} disabled={!newAttachmentName.trim() || !newAttachmentUrl.trim()}>
+                  Add
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Link to files on SharePoint, OneDrive, or any URL.</p>
+            </div>
+          )}
+
           <Button
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
             onClick={() => { if (form.title.trim()) onSave(form); }}

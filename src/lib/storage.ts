@@ -1,5 +1,14 @@
 // localStorage data layer for NC Dashboard
 
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  addedBy: string;
+  addedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -11,6 +20,7 @@ export interface Task {
   dueDate: string;
   subtasks: { id: string; label: string; done: boolean }[];
   notes: { id: string; text: string; author: string; timestamp: string }[];
+  attachments?: Attachment[];
   pinned: boolean;
   createdBy: string;
   createdAt: string;

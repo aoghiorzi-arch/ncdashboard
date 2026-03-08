@@ -3,7 +3,7 @@ import { generateId } from './storage';
 
 export interface ActivityEntry {
   id: string;
-  action: 'created' | 'updated' | 'deleted';
+  action: 'created' | 'updated' | 'deleted' | 'commented' | 'attached' | 'status_changed' | 'completed';
   module: string;
   itemTitle: string;
   user: string;
