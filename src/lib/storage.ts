@@ -304,6 +304,7 @@ export const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'burndown', visible: true },
   { id: 'recentTasks', visible: true },
   { id: 'activityFeed', visible: true },
+  { id: 'checklists', visible: true },
 ];
 
 const DEFAULT_SETTINGS: NCSettings = {
