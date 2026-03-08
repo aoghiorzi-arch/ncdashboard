@@ -21,6 +21,7 @@ import SettingsModule from "./pages/SettingsModule";
 import AuditTrail from "./pages/AuditTrail";
 import LoginPage from "./pages/LoginPage";
 import ChecklistsPage from "./pages/ChecklistsPage";
+import ForecastingPage from "./pages/ForecastingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/settings" element={<SettingsModule />} />
             <Route path="/audit" element={<AuditTrail />} />
             <Route path="/checklists" element={<ChecklistsPage />} />
+            <Route path="/forecasting" element={<ForecastingPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />

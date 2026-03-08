@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
   FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
   BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Plus, Menu, X, History, ClipboardList,
+  Search, Plus, Menu, X, History, ClipboardList, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickAddDialog } from './QuickAddDialog';
@@ -42,6 +42,7 @@ const NAV_SECTIONS = [
     items: [
       { title: 'Budget & Expenses', path: '/budget', icon: PiggyBank },
       { title: 'Platform Metrics', path: '/metrics', icon: BarChart3 },
+      { title: 'Forecasting', path: '/forecasting', icon: TrendingUp },
       { title: 'Legal & Compliance', path: '/legal', icon: Shield },
       { title: 'Team & Roles', path: '/team', icon: UserCog },
       { title: 'Audit Trail', path: '/audit', icon: History },
