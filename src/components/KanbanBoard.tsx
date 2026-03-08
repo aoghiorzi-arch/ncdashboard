@@ -143,13 +143,9 @@ export function KanbanBoard<T extends KanbanCard>({
 
             {/* Bottom drop indicator */}
             {isOver && col.length > 0 && !isDragSource && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-2 border-2 border-dashed border-accent/30 rounded-md p-2 text-center"
-              >
+              <div className="mt-2 border-2 border-dashed border-accent/30 rounded-md p-2 text-center animate-in fade-in duration-200">
                 <p className="text-[10px] text-accent/70">Drop here</p>
-              </motion.div>
+              </div>
             )}
           </div>
         );
