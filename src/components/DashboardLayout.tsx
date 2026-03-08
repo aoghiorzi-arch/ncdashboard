@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
@@ -11,6 +11,8 @@ import { QuickAddDialog } from './QuickAddDialog';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
 import { AnimatedPage } from './AnimatedPage';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { Breadcrumbs } from './Breadcrumbs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NAV_SECTIONS = [
