@@ -116,6 +116,9 @@ export default function TaskManager() {
           <Button variant={view === 'board' ? 'default' : 'outline'} size="sm" onClick={() => setView('board')}>
             <LayoutGrid className="w-4 h-4 mr-1" /> Board
           </Button>
+          <Button variant={view === 'swimlane' ? 'default' : 'outline'} size="sm" onClick={() => setView('swimlane')}>
+            <Rows3 className="w-4 h-4 mr-1" /> Swim Lanes
+          </Button>
           <Button variant={view === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setView('list')}>
             <List className="w-4 h-4 mr-1" /> List
           </Button>
