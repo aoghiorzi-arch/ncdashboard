@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { instructorCRUD, generateId, type Instructor } from '@/lib/storage';
+import { instructorCRUD, generateId, getSettings, type Instructor } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Star } from 'lucide-react';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, Star, Download, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const STATUSES = ['Identified', 'Approached', 'In Conversation', 'Agreement Sent', 'Contracted', 'Class in Production', 'Class Live', 'Relationship Paused'];
@@ -25,6 +29,7 @@ export default function InstructorCRM() {
   const [editItem, setEditItem] = useState<Instructor | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const { sorted, sortKey, sortDir, toggle } = useSortableData(instructors, 'fullName');
 
   useEffect(() => {
     const refresh = () => setInstructors(instructorCRUD.getAll());
@@ -35,13 +40,31 @@ export default function InstructorCRM() {
 
   const handleSave = (item: Instructor) => {
     const now = new Date().toISOString();
-    if (editItem) { instructorCRUD.update({ ...item, updatedAt: now }); }
-    else { instructorCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now }); }
+    const user = getSettings().userName;
+    if (editItem) {
+      instructorCRUD.update({ ...item, updatedAt: now });
+      logActivity('updated', 'Instructors', item.fullName, user);
+    } else {
+      instructorCRUD.add({ ...item, id: generateId(), createdAt: now, updatedAt: now });
+      logActivity('created', 'Instructors', item.fullName, user);
+    }
     setInstructors(instructorCRUD.getAll());
     setEditItem(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { instructorCRUD.remove(id); setInstructors(instructorCRUD.getAll()); setEditItem(null); };
+  const handleDelete = (id: string) => {
+    const item = instructors.find(i => i.id === id);
+    instructorCRUD.remove(id);
+    if (item) logActivity('deleted', 'Instructors', item.fullName, getSettings().userName);
+    setInstructors(instructorCRUD.getAll());
+    setEditItem(null);
+  };
+
+  const handleExport = () => exportToCSV(instructors, 'instructors', [
+    { key: 'fullName', label: 'Name' }, { key: 'status', label: 'Status' },
+    { key: 'specialism', label: 'Specialism' }, { key: 'email', label: 'Email' },
+    { key: 'institution', label: 'Institution' }, { key: 'rating', label: 'Rating' },
+  ]);
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4">
@@ -50,48 +73,58 @@ export default function InstructorCRM() {
           <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('kanban')}>Pipeline</Button>
           <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>List</Button>
         </div>
-        <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Instructor
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+          <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> New Instructor
+          </Button>
+        </div>
       </div>
 
       {viewMode === 'kanban' && (
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {STATUSES.map(status => {
-            const col = instructors.filter(i => i.status === status);
-            return (
-              <div key={status} className={cn('rounded-lg p-3 min-w-[200px] min-h-[200px] border flex-shrink-0', statusColors[status])}>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{status}</h4>
-                  <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {col.map(inst => (
-                    <div key={inst.id} onClick={() => setEditItem(inst)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
-                      <p className="text-sm font-medium text-foreground">{inst.fullName}</p>
-                      <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
+        instructors.length === 0 ? (
+          <EmptyState icon={Users} title="No instructors yet" description="Add your first instructor to start building the pipeline." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Instructor</Button>} />
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {STATUSES.map(status => {
+              const col = instructors.filter(i => i.status === status);
+              return (
+                <div key={status} className={cn('rounded-lg p-3 min-w-[200px] min-h-[200px] border flex-shrink-0', statusColors[status])}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-[10px] font-semibold uppercase tracking-wide text-foreground">{status}</h4>
+                    <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {col.map(inst => (
+                      <div key={inst.id} onClick={() => setEditItem(inst)} className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow">
+                        <p className="text-sm font-medium text-foreground">{inst.fullName}</p>
+                        <p className="text-[10px] text-muted-foreground">{inst.specialism || inst.institution}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          {[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {viewMode === 'list' && (
         <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-xs text-muted-foreground border-b">
-              <th className="text-left p-3 font-medium">Name</th><th className="text-left p-3 font-medium">Status</th>
-              <th className="text-left p-3 font-medium">Specialism</th><th className="text-left p-3 font-medium">Email</th>
-              <th className="text-left p-3 font-medium">Rating</th><th className="p-3"></th>
+            <thead><tr className="border-b">
+              <th className="text-left p-3"><SortableHeader label="Name" active={sortKey === 'fullName'} direction={sortKey === 'fullName' ? sortDir : null} onClick={() => toggle('fullName')} /></th>
+              <th className="text-left p-3"><SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggle('status')} /></th>
+              <th className="text-left p-3"><SortableHeader label="Specialism" active={sortKey === 'specialism'} direction={sortKey === 'specialism' ? sortDir : null} onClick={() => toggle('specialism')} /></th>
+              <th className="text-left p-3"><SortableHeader label="Email" active={sortKey === 'email'} direction={sortKey === 'email' ? sortDir : null} onClick={() => toggle('email')} /></th>
+              <th className="text-left p-3"><SortableHeader label="Rating" active={sortKey === 'rating'} direction={sortKey === 'rating' ? sortDir : null} onClick={() => toggle('rating')} /></th>
+              <th className="p-3"></th>
             </tr></thead>
             <tbody>
-              {instructors.map(inst => (
+              {sorted.map(inst => (
                 <tr key={inst.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditItem(inst)}>
                   <td className="p-3 font-medium text-foreground">{inst.fullName}</td>
                   <td className="p-3 text-xs">{inst.status}</td>
@@ -101,7 +134,7 @@ export default function InstructorCRM() {
                   <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(inst.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
                 </tr>
               ))}
-              {instructors.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">No instructors yet.</td></tr>}
+              {sorted.length === 0 && <tr><td colSpan={6}><EmptyState icon={Users} title="No instructors yet" description="Add your first instructor to get started." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Instructor</Button>} /></td></tr>}
             </tbody>
           </table>
         </div>

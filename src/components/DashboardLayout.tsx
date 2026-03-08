@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
@@ -11,6 +11,8 @@ import { QuickAddDialog } from './QuickAddDialog';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
 import { AnimatedPage } from './AnimatedPage';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { Breadcrumbs } from './Breadcrumbs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const NAV_SECTIONS = [
@@ -91,6 +93,12 @@ export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
+  useEffect(() => {
+    const handler = () => setQuickAddOpen(true);
+    window.addEventListener('nc-quick-add', handler);
+    return () => window.removeEventListener('nc-quick-add', handler);
+  }, []);
+
   const currentModule = NAV_SECTIONS
     .flatMap(s => s.items)
     .find(i => i.path === location.pathname)?.title || 'Dashboard';
@@ -165,6 +173,7 @@ export function DashboardLayout() {
 
         {/* Content with animation */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <Breadcrumbs />
           <AnimatedPage>
             <Outlet />
           </AnimatedPage>
@@ -181,6 +190,7 @@ export function DashboardLayout() {
 
       <QuickAddDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
       <GlobalSearch />
+      <KeyboardShortcuts />
     </div>
   );
 }

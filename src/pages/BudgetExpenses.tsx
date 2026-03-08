@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { expenseCRUD, incomeCRUD, getSettings, generateId, type Expense, type Income } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
+import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,7 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, PiggyBank } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
@@ -31,6 +35,9 @@ export default function BudgetExpenses() {
   const [newExpenseOpen, setNewExpenseOpen] = useState(false);
   const [newIncomeOpen, setNewIncomeOpen] = useState(false);
 
+  const expenseSort = useSortableData(expenses, 'description');
+  const incomeSort = useSortableData(income, 'description');
+
   useEffect(() => {
     const refresh = () => { setExpenses(expenseCRUD.getAll()); setIncome(incomeCRUD.getAll()); };
     refresh();
@@ -46,16 +53,30 @@ export default function BudgetExpenses() {
   const pct = settings.totalBudget > 0 ? Math.round((spent / settings.totalBudget) * 100) : 0;
 
   const handleSaveExpense = (e: Expense) => {
-    if (editExpense) { expenseCRUD.update(e); } else { expenseCRUD.add({ ...e, id: generateId(), createdAt: new Date().toISOString() }); }
+    const user = settings.userName;
+    if (editExpense) { expenseCRUD.update(e); logActivity('updated', 'Budget', e.description, user); }
+    else { expenseCRUD.add({ ...e, id: generateId(), createdAt: new Date().toISOString() }); logActivity('created', 'Budget', e.description, user); }
     setExpenses(expenseCRUD.getAll()); setEditExpense(null); setNewExpenseOpen(false);
   };
-  const handleDeleteExpense = (id: string) => { expenseCRUD.remove(id); setExpenses(expenseCRUD.getAll()); setEditExpense(null); };
+  const handleDeleteExpense = (id: string) => {
+    const item = expenses.find(e => e.id === id);
+    expenseCRUD.remove(id);
+    if (item) logActivity('deleted', 'Budget', item.description, settings.userName);
+    setExpenses(expenseCRUD.getAll()); setEditExpense(null);
+  };
 
   const handleSaveIncome = (i: Income) => {
-    if (editIncome) { incomeCRUD.update(i); } else { incomeCRUD.add({ ...i, id: generateId(), createdAt: new Date().toISOString() }); }
+    const user = settings.userName;
+    if (editIncome) { incomeCRUD.update(i); logActivity('updated', 'Income', i.description, user); }
+    else { incomeCRUD.add({ ...i, id: generateId(), createdAt: new Date().toISOString() }); logActivity('created', 'Income', i.description, user); }
     setIncome(incomeCRUD.getAll()); setEditIncome(null); setNewIncomeOpen(false);
   };
-  const handleDeleteIncome = (id: string) => { incomeCRUD.remove(id); setIncome(incomeCRUD.getAll()); setEditIncome(null); };
+  const handleDeleteIncome = (id: string) => {
+    const item = income.find(i => i.id === id);
+    incomeCRUD.remove(id);
+    if (item) logActivity('deleted', 'Income', item.description, settings.userName);
+    setIncome(incomeCRUD.getAll()); setEditIncome(null);
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
@@ -75,7 +96,6 @@ export default function BudgetExpenses() {
         ))}
       </div>
 
-      {/* Budget Bar */}
       <div className="bg-card rounded-lg p-4 nc-shadow-card">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground">Budget Utilisation</span>
@@ -90,20 +110,28 @@ export default function BudgetExpenses() {
         <TabsList><TabsTrigger value="expenses">Expenses</TabsTrigger><TabsTrigger value="income">Income</TabsTrigger></TabsList>
 
         <TabsContent value="expenses" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportToCSV(expenses, 'expenses', [
+              { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
+              { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'phase', label: 'Phase' }, { key: 'paymentDate', label: 'Date' },
+            ])}><Download className="w-4 h-4 mr-1" /> CSV</Button>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewExpenseOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> New Expense
             </Button>
           </div>
           <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-xs text-muted-foreground border-b">
-                <th className="text-left p-3 font-medium">Description</th><th className="text-left p-3 font-medium">Category</th>
-                <th className="text-right p-3 font-medium">Amount</th><th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Phase</th><th className="text-left p-3 font-medium">Date</th><th className="p-3"></th>
+              <thead><tr className="border-b">
+                <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
+                <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
+                <th className="text-right p-3"><SortableHeader label="Amount" active={expenseSort.sortKey === 'amount'} direction={expenseSort.sortKey === 'amount' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('amount')} className="justify-end" /></th>
+                <th className="text-left p-3"><SortableHeader label="Status" active={expenseSort.sortKey === 'status'} direction={expenseSort.sortKey === 'status' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('status')} /></th>
+                <th className="text-left p-3"><SortableHeader label="Phase" active={expenseSort.sortKey === 'phase'} direction={expenseSort.sortKey === 'phase' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('phase')} /></th>
+                <th className="text-left p-3"><SortableHeader label="Date" active={expenseSort.sortKey === 'paymentDate'} direction={expenseSort.sortKey === 'paymentDate' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('paymentDate')} /></th>
+                <th className="p-3"></th>
               </tr></thead>
               <tbody>
-                {expenses.map(e => (
+                {expenseSort.sorted.map(e => (
                   <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditExpense(e)}>
                     <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingDown className="w-3.5 h-3.5 text-nc-alert shrink-0" />{e.description}</td>
                     <td className="p-3 text-xs text-muted-foreground">{e.category}</td>
@@ -114,27 +142,34 @@ export default function BudgetExpenses() {
                     <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
                   </tr>
                 ))}
-                {expenses.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">No expenses recorded yet.</td></tr>}
+                {expenseSort.sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
               </tbody>
             </table>
           </div>
         </TabsContent>
 
         <TabsContent value="income" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportToCSV(income, 'income', [
+              { key: 'description', label: 'Description' }, { key: 'source', label: 'Source' },
+              { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'dateReceived', label: 'Date' },
+            ])}><Download className="w-4 h-4 mr-1" /> CSV</Button>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewIncomeOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> New Income
             </Button>
           </div>
           <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-xs text-muted-foreground border-b">
-                <th className="text-left p-3 font-medium">Description</th><th className="text-left p-3 font-medium">Source</th>
-                <th className="text-right p-3 font-medium">Amount</th><th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Date</th><th className="p-3"></th>
+              <thead><tr className="border-b">
+                <th className="text-left p-3"><SortableHeader label="Description" active={incomeSort.sortKey === 'description'} direction={incomeSort.sortKey === 'description' ? incomeSort.sortDir : null} onClick={() => incomeSort.toggle('description')} /></th>
+                <th className="text-left p-3"><SortableHeader label="Source" active={incomeSort.sortKey === 'source'} direction={incomeSort.sortKey === 'source' ? incomeSort.sortDir : null} onClick={() => incomeSort.toggle('source')} /></th>
+                <th className="text-right p-3"><SortableHeader label="Amount" active={incomeSort.sortKey === 'amount'} direction={incomeSort.sortKey === 'amount' ? incomeSort.sortDir : null} onClick={() => incomeSort.toggle('amount')} className="justify-end" /></th>
+                <th className="text-left p-3"><SortableHeader label="Status" active={incomeSort.sortKey === 'status'} direction={incomeSort.sortKey === 'status' ? incomeSort.sortDir : null} onClick={() => incomeSort.toggle('status')} /></th>
+                <th className="text-left p-3"><SortableHeader label="Date" active={incomeSort.sortKey === 'dateReceived'} direction={incomeSort.sortKey === 'dateReceived' ? incomeSort.sortDir : null} onClick={() => incomeSort.toggle('dateReceived')} /></th>
+                <th className="p-3"></th>
               </tr></thead>
               <tbody>
-                {income.map(i => (
+                {incomeSort.sorted.map(i => (
                   <tr key={i.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditIncome(i)}>
                     <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingUp className="w-3.5 h-3.5 text-nc-success shrink-0" />{i.description}</td>
                     <td className="p-3 text-xs text-muted-foreground">{i.source}</td>
@@ -144,7 +179,7 @@ export default function BudgetExpenses() {
                     <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteIncome(i.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
                   </tr>
                 ))}
-                {income.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">No income recorded yet.</td></tr>}
+                {incomeSort.sorted.length === 0 && <tr><td colSpan={6}><EmptyState icon={TrendingUp} title="No income recorded" description="Add your first income entry." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewIncomeOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Income</Button>} /></td></tr>}
               </tbody>
             </table>
           </div>
