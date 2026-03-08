@@ -30,6 +30,7 @@ const NAV_SECTIONS = [
       { title: 'Tasks', path: '/tasks', icon: CheckSquare },
       { title: 'Gantt Chart', path: '/gantt', icon: CalendarDays },
       { title: 'Checklists', path: '/checklists', icon: ClipboardList },
+      { title: 'Workflows', path: '/workflows', icon: Zap },
       { title: 'Classes Pipeline', path: '/classes', icon: Film },
       { title: 'Instructor CRM', path: '/instructors', icon: Users },
       { title: 'Documents', path: '/documents', icon: FolderOpen },
