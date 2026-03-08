@@ -109,6 +109,20 @@ export default function ClassesPipeline() {
             </Button>
           }
         />
+      ) : viewMode === 'gantt' ? (
+        <GanttChart
+          items={classes
+            .filter(c => c.targetPublicationDate)
+            .map(c => ({
+              id: c.id,
+              title: c.title,
+              startDate: c.createdAt.split('T')[0],
+              endDate: c.targetPublicationDate || c.createdAt.split('T')[0],
+              stage: c.pipelineStage,
+              color: 'bg-accent',
+            } as GanttItem))
+          }
+        />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-4">
           {STAGES.map(stage => {
