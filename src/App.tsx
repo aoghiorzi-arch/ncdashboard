@@ -18,6 +18,7 @@ import PlatformMetrics from "./pages/PlatformMetrics";
 import LegalCompliance from "./pages/LegalCompliance";
 import TeamRoles from "./pages/TeamRoles";
 import SettingsModule from "./pages/SettingsModule";
+import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/team" element={<TeamRoles />} />
             <Route path="/settings" element={<SettingsModule />} />
           </Route>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
