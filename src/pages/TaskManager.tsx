@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
-import { logActivity } from '@/lib/activityLog';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 
