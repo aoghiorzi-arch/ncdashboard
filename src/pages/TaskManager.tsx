@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTasks, saveTasks, generateId, getSettings, type Task } from '@/lib/storage';
+import { getTasks, saveTasks, generateId, getSettings, type Task, type Attachment } from '@/lib/storage';
+import { logActivity } from '@/lib/activityLog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
