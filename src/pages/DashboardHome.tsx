@@ -320,6 +320,8 @@ export default function DashboardHome() {
         <ActivityFeed limit={10} />
       </div>
     ),
+
+    checklists: <ChecklistWidget key="checklists" />,
   };
 
   // Grouped widgets that render together
