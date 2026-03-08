@@ -242,6 +242,13 @@ export interface SharePointConfig {
   listMappings: Record<string, string>; // module key -> SharePoint list name
 }
 
+export type UserRole = 'admin' | 'editor' | 'viewer';
+
+export interface DashboardWidget {
+  id: string;
+  visible: boolean;
+}
+
 export interface NCSettings {
   platformName: string;
   launchDate: string;
@@ -252,6 +259,8 @@ export interface NCSettings {
   foundersMembers: number;
   darkMode: boolean;
   sharePoint: SharePointConfig;
+  userRole: UserRole;
+  dashboardWidgets: DashboardWidget[];
 }
 
 const DEFAULT_SHAREPOINT: SharePointConfig = {
