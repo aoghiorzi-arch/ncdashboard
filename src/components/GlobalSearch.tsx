@@ -108,7 +108,7 @@ export function GlobalSearch() {
   }, {});
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={setOpen} filter={() => 1}>
       <CommandInput placeholder="Search across all modules… (⌘K)" onValueChange={search} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
