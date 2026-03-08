@@ -178,34 +178,84 @@ export default function TaskManager() {
         <>
           {/* Board View */}
           {view === 'board' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {STATUSES.map(status => {
-                const col = filtered.filter(t => t.status === status);
+            <KanbanBoard<Task & KanbanCard>
+              columns={STATUSES}
+              columnColors={statusColors}
+              items={filtered.map(t => ({ ...t, column: t.status }))}
+              onMove={(id, newStatus) => moveTask(id, newStatus as Task['status'])}
+              onCardClick={setEditTask}
+              searchFields={['title', 'owner', 'moduleTag'] as (keyof Task)[]}
+              searchPlaceholder="Search tasks…"
+              renderCard={task => {
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete';
+                const daysUntilDue = task.dueDate ? Math.ceil((new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
                 return (
-                  <div key={status} className={cn('rounded-lg p-3 min-h-[200px] border', statusColors[status])}>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">{status}</h4>
-                      <span className="text-[10px] font-medium text-muted-foreground bg-background rounded-full px-2 py-0.5">{col.length}</span>
+                  <div className={cn(isOverdue && 'ring-1 ring-destructive/40 rounded -m-1 p-1')}>
+                    <p className="text-sm font-medium text-foreground mb-2">{task.title}</p>
+                    <div className="flex items-center justify-between">
+                      <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', priorityBadge[task.priority])}>{task.priority}</span>
+                      <span className="text-[10px] text-muted-foreground">{task.owner}</span>
                     </div>
-                    <div className="space-y-2">
-                      {col.map(task => (
-                        <div
-                          key={task.id}
-                          onClick={() => setEditTask(task)}
-                          className="bg-card rounded-md p-3 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow"
-                        >
-                          <p className="text-sm font-medium text-foreground mb-2">{task.title}</p>
-                          <div className="flex items-center justify-between">
-                            <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', priorityBadge[task.priority])}>{task.priority}</span>
-                            <span className="text-[10px] text-muted-foreground">{task.owner}</span>
-                          </div>
-                          {task.dueDate && (
-                            <p className={cn('text-[10px] mt-2', new Date(task.dueDate) < new Date() && task.status !== 'Complete' ? 'text-destructive font-medium' : 'text-muted-foreground')}>
-                              Due: {task.dueDate}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                    {task.dueDate && (
+                      <div className="flex items-center justify-between mt-2">
+                        <p className={cn(
+                          'text-[10px]',
+                          isOverdue ? 'text-destructive font-medium' :
+                          daysUntilDue !== null && daysUntilDue <= 3 ? 'text-nc-warn font-medium' :
+                          'text-muted-foreground'
+                        )}>
+                          {isOverdue ? '🔴 ' : daysUntilDue !== null && daysUntilDue <= 3 ? '🟡 ' : ''}
+                          Due: {task.dueDate}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              }}
+            />
+          )}
+
+          {/* Swim Lane View (grouped by priority) */}
+          {view === 'swimlane' && (
+            <div className="space-y-4">
+              {PRIORITIES.slice().reverse().map(priority => {
+                const priorityTasks = filtered.filter(t => t.priority === priority);
+                if (priorityTasks.length === 0) return null;
+                return (
+                  <div key={priority} className="bg-card rounded-lg nc-shadow-card overflow-hidden">
+                    <div className={cn('px-4 py-2 border-b flex items-center justify-between', priorityBadge[priority])}>
+                      <h4 className="text-xs font-semibold uppercase tracking-wide">{priority} Priority</h4>
+                      <span className="text-[10px] font-medium">{priorityTasks.length} tasks</span>
+                    </div>
+                    <div className="p-3">
+                      <div className="grid grid-cols-5 gap-2">
+                        {STATUSES.map(status => {
+                          const col = priorityTasks.filter(t => t.status === status);
+                          return (
+                            <div key={status} className="min-h-[60px]">
+                              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">{status}</p>
+                              <div className="space-y-1.5">
+                                {col.map(task => (
+                                  <div
+                                    key={task.id}
+                                    onClick={() => setEditTask(task)}
+                                    className={cn(
+                                      'rounded p-2 text-xs cursor-pointer hover:nc-shadow-card transition-shadow border',
+                                      statusColors[status]
+                                    )}
+                                  >
+                                    <p className="font-medium text-foreground truncate">{task.title}</p>
+                                    <p className="text-[9px] text-muted-foreground mt-0.5">{task.owner}</p>
+                                    {task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete' && (
+                                      <p className="text-[9px] text-destructive mt-0.5">🔴 Overdue</p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 );
