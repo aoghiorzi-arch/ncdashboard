@@ -210,6 +210,7 @@ export default function TaskManager() {
                         </p>
                       </div>
                     )}
+                    <DependencyBadge taskId={task.id} tasks={tasks} />
                   </div>
                 );
               }}
