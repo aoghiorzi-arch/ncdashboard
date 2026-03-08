@@ -192,6 +192,7 @@ export function DashboardLayout() {
       <QuickAddDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
       <GlobalSearch />
       <KeyboardShortcuts />
+      <DashboardHelp />
     </div>
   );
 }
