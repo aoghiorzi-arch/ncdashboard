@@ -68,6 +68,8 @@ export default function TaskManager() {
     return true;
   });
 
+  const { sorted: sortedFiltered, sortKey, sortDir, toggle: toggleSort } = useSortableData(filtered);
+
   const toggleSelect = (id: string) => {
     setSelected(prev => {
       const next = new Set(prev);
