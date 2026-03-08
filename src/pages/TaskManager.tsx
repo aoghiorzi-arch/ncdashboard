@@ -14,6 +14,8 @@ import { LayoutGrid, List, Plus, Trash2, Download, CheckSquare } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
+import { SortableHeader, useSortableData } from '@/components/SortableHeader';
+import { logActivity } from '@/lib/activityLog';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
@@ -58,13 +60,19 @@ export default function TaskManager() {
     ));
   };
 
-  const deleteTaskById = (id: string) => { persist(tasks.filter(t => t.id !== id)); };
+  const deleteTaskById = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) logActivity('deleted', 'Tasks', task.title, getSettings().userName);
+    persist(tasks.filter(t => t.id !== id));
+  };
 
   const filtered = tasks.filter(t => {
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
     if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
     return true;
   });
+
+  const { sorted: sortedFiltered, sortKey, sortDir, toggle: toggleSort } = useSortableData(filtered);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -206,24 +214,36 @@ export default function TaskManager() {
             <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-muted-foreground border-b">
+                  <tr className="border-b">
                     <th className="p-3 w-8">
                       <Checkbox
-                        checked={selected.size === filtered.length && filtered.length > 0}
+                        checked={selected.size === sortedFiltered.length && sortedFiltered.length > 0}
                         onCheckedChange={toggleSelectAll}
                       />
                     </th>
-                    <th className="text-left p-3 font-medium">Task</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Priority</th>
-                    <th className="text-left p-3 font-medium hidden md:table-cell">Module</th>
-                    <th className="text-left p-3 font-medium hidden sm:table-cell">Owner</th>
-                    <th className="text-left p-3 font-medium">Due</th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Task" active={sortKey === 'title'} direction={sortKey === 'title' ? sortDir : null} onClick={() => toggleSort('title')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Status" active={sortKey === 'status'} direction={sortKey === 'status' ? sortDir : null} onClick={() => toggleSort('status')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Priority" active={sortKey === 'priority'} direction={sortKey === 'priority' ? sortDir : null} onClick={() => toggleSort('priority')} />
+                    </th>
+                    <th className="text-left p-3 hidden md:table-cell">
+                      <SortableHeader label="Module" active={sortKey === 'moduleTag'} direction={sortKey === 'moduleTag' ? sortDir : null} onClick={() => toggleSort('moduleTag')} />
+                    </th>
+                    <th className="text-left p-3 hidden sm:table-cell">
+                      <SortableHeader label="Owner" active={sortKey === 'owner'} direction={sortKey === 'owner' ? sortDir : null} onClick={() => toggleSort('owner')} />
+                    </th>
+                    <th className="text-left p-3">
+                      <SortableHeader label="Due" active={sortKey === 'dueDate'} direction={sortKey === 'dueDate' ? sortDir : null} onClick={() => toggleSort('dueDate')} />
+                    </th>
                     <th className="p-3"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(task => (
+                  {sortedFiltered.map(task => (
                     <tr
                       key={task.id}
                       className={cn(
@@ -261,7 +281,7 @@ export default function TaskManager() {
                       </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && (
+                  {sortedFiltered.length === 0 && (
                     <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No tasks match your filters.</td></tr>
                   )}
                 </tbody>
@@ -277,10 +297,13 @@ export default function TaskManager() {
         onOpenChange={(open) => { if (!open) { setEditTask(null); setNewOpen(false); } }}
         onSave={(task) => {
           const now = new Date().toISOString();
+          const user = getSettings().userName;
           if (editTask) {
             persist(tasks.map(t => t.id === task.id ? { ...task, updatedAt: now } : t));
+            logActivity('updated', 'Tasks', task.title, user);
           } else {
-            persist([...tasks, { ...task, id: generateId(), createdAt: now, updatedAt: now, createdBy: getSettings().userName }]);
+            persist([...tasks, { ...task, id: generateId(), createdAt: now, updatedAt: now, createdBy: user }]);
+            logActivity('created', 'Tasks', task.title, user);
           }
           setEditTask(null);
           setNewOpen(false);

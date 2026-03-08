@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Trash2, Download, Film } from 'lucide-react';
+import { Plus, Trash2, Download, Film, LayoutGrid, GanttChartSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
+import { GanttChart, type GanttItem } from '@/components/GanttChart';
 
 const STAGES = ['Concept / Approved', 'Instructor Briefed', 'Pre-Production', 'Filming Scheduled', 'Filming Complete', 'Editing', 'QA Review', 'Kajabi Build', 'Published', 'Archived'];
 const stageColors: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function ClassesPipeline() {
   const [classes, setClasses] = useState<ClassRecord[]>([]);
   const [editClass, setEditClass] = useState<ClassRecord | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'pipeline' | 'gantt'>('pipeline');
 
   useEffect(() => {
     const refresh = () => setClasses(classCRUD.getAll());
@@ -81,6 +83,12 @@ export default function ClassesPipeline() {
           </div>
         )}
         <div className="flex items-center gap-2">
+          <Button variant={viewMode === 'pipeline' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('pipeline')}>
+            <LayoutGrid className="w-4 h-4 mr-1" /> Pipeline
+          </Button>
+          <Button variant={viewMode === 'gantt' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('gantt')}>
+            <GanttChartSquare className="w-4 h-4 mr-1" /> Timeline
+          </Button>
           <Button variant="outline" size="sm" onClick={handleCSV} title="Export CSV">
             <Download className="w-4 h-4" />
           </Button>
@@ -99,6 +107,20 @@ export default function ClassesPipeline() {
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> Add First Class
             </Button>
+          }
+        />
+      ) : viewMode === 'gantt' ? (
+        <GanttChart
+          items={classes
+            .filter(c => c.targetPublicationDate)
+            .map(c => ({
+              id: c.id,
+              title: c.title,
+              startDate: c.createdAt.split('T')[0],
+              endDate: c.targetPublicationDate || c.createdAt.split('T')[0],
+              stage: c.pipelineStage,
+              color: 'bg-accent',
+            } as GanttItem))
           }
         />
       ) : (
