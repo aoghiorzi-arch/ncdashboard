@@ -153,7 +153,7 @@ export function DashboardLayout() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+              onClick={() => window.dispatchEvent(new Event('nc-open-search'))}
               className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground flex items-center gap-2"
             >
               <Search className="w-4 h-4" />
