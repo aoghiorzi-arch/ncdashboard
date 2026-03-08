@@ -7,6 +7,7 @@ import { ProjectHealthScore } from '@/components/ProjectHealthScore';
 import { MilestoneTracker } from '@/components/MilestoneTracker';
 import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
 import { StatusReport } from '@/components/StatusReport';
+import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
