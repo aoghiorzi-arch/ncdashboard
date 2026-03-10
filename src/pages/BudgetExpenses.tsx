@@ -79,6 +79,54 @@ export default function BudgetExpenses() {
     setIncome(incomeCRUD.getAll()); setEditIncome(null);
   };
 
+  const { toast } = useToast();
+
+  const handleImportExpenses = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast({ title: 'Empty CSV', description: 'No data rows found.', variant: 'destructive' }); return; }
+      const now = new Date().toISOString();
+      const user = settings.userName;
+      let imported = 0;
+      rows.forEach(row => {
+        const description = row['Description'] || row['description'] || '';
+        if (!description) return;
+        const amount = parseFloat(row['Amount'] || row['amount'] || '0');
+        const expense: Expense = {
+          id: generateId(),
+          description,
+          category: row['Category'] || row['category'] || 'Miscellaneous',
+          supplier: row['Supplier'] || row['supplier'] || row['Payee'] || row['payee'] || '',
+          amount: isNaN(amount) ? 0 : amount,
+          status: (row['Status'] || row['status'] || 'Draft') as Expense['status'],
+          paymentMethod: (row['Payment Method'] || row['paymentMethod'] || 'Invoice') as Expense['paymentMethod'],
+          invoiceRef: row['Invoice Ref'] || row['invoiceRef'] || '',
+          invoiceDocLink: '',
+          budgetLine: row['Budget Line'] || row['budgetLine'] || '',
+          phase: (row['Phase'] || row['phase'] || 'Phase 1') as Expense['phase'],
+          paymentDate: row['Date'] || row['Payment Date'] || row['paymentDate'] || '',
+          recurring: false,
+          recurrenceType: 'none',
+          nextDueDate: '',
+          notes: row['Notes'] || row['notes'] || '',
+          createdBy: user,
+          approvedBy: '',
+          createdAt: now,
+        };
+        expenseCRUD.add(expense);
+        imported++;
+      });
+      setExpenses(expenseCRUD.getAll());
+      logActivity('imported', 'Budget', `${imported} expenses from CSV`, user);
+      toast({ title: 'Import complete', description: `${imported} expense(s) imported successfully.` });
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'No file selected') {
+        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
       {/* Budget Overview */}
