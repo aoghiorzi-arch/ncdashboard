@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, TrendingUp, TrendingDown, Download, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
