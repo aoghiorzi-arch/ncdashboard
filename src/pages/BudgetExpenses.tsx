@@ -90,9 +90,23 @@ export default function BudgetExpenses() {
   };
   const handleDeleteIncome = (id: string) => {
     const item = income.find(i => i.id === id);
-    incomeCRUD.remove(id);
-    if (item) logActivity('deleted', 'Income', item.description, settings.userName);
-    setIncome(incomeCRUD.getAll()); setEditIncome(null);
+    if (!item) return;
+    deleteWithUndo(item.description, item, () => {
+      incomeCRUD.remove(id);
+      logActivity('deleted', 'Income', item.description, settings.userName);
+      setIncome(incomeCRUD.getAll()); setEditIncome(null);
+    }, (restored) => {
+      incomeCRUD.add(restored);
+      setIncome(incomeCRUD.getAll());
+    });
+  };
+
+  const duplicateIncome = (i: Income) => {
+    const dup: Income = { ...i, id: generateId(), description: `${i.description} (Copy)`, status: 'Expected', createdAt: new Date().toISOString() };
+    incomeCRUD.add(dup);
+    logActivity('created', 'Income', dup.description, settings.userName);
+    setIncome(incomeCRUD.getAll());
+    sonnerToast.success(`Duplicated "${i.description}"`);
   };
 
   const { toast } = useToast();

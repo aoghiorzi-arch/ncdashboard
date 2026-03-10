@@ -397,9 +397,14 @@ export default function TaskManager() {
                         {task.dueDate || '—'}
                       </td>
                       <td className="p-3">
-                        <button onClick={e => { e.stopPropagation(); deleteTaskById(task.id); }} className="text-muted-foreground hover:text-destructive transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={e => { e.stopPropagation(); duplicateTask(task); }} className="text-muted-foreground hover:text-accent transition-colors" title="Duplicate">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); deleteTaskById(task.id); }} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

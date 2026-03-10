@@ -93,8 +93,9 @@ export default function EventsManager() {
                 <p className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{ev.guestList.length} guests • Capacity: {ev.capacity || '—'}</p>
                 <p>{ev.programme.length} programme segments</p>
               </div>
-              <div className="flex justify-end mt-3">
-                <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
+              <div className="flex justify-end mt-3 gap-2">
+                <button onClick={e => { e.stopPropagation(); duplicateEvent(ev); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))}
