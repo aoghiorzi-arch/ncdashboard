@@ -11,6 +11,7 @@ import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Plus, Trash2, Handshake, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
 
 const TYPES: Partnership['type'][] = ['Church', 'Academic', 'Media', 'Funder', 'Supplier', 'Other'];
 const STATUSES: Partnership['status'][] = ['Identified', 'In Conversation', 'Agreed', 'Active', 'Dormant', 'Ended'];
