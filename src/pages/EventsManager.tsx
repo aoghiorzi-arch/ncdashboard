@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, Users, CalendarDays, Download, PartyPopper } from 'lucide-react';
+import { Plus, Trash2, Users, CalendarDays, Download, PartyPopper, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast } from 'sonner';
 
 const EVENT_STATUSES: NCEvent['status'][] = ['Planning', 'Confirmed', 'In Progress', 'Complete', 'Cancelled'];
 const statusBadge: Record<string, string> = {
