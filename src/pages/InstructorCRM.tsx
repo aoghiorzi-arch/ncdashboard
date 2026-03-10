@@ -57,10 +57,16 @@ export default function InstructorCRM() {
 
   const handleDelete = (id: string) => {
     const item = instructors.find(i => i.id === id);
-    instructorCRUD.remove(id);
-    if (item) logActivity('deleted', 'Instructors', item.fullName, getSettings().userName);
-    setInstructors(instructorCRUD.getAll());
-    setEditItem(null);
+    if (!item) return;
+    deleteWithUndo(item.fullName, item, () => {
+      instructorCRUD.remove(id);
+      logActivity('deleted', 'Instructors', item.fullName, getSettings().userName);
+      setInstructors(instructorCRUD.getAll());
+      setEditItem(null);
+    }, (restored) => {
+      instructorCRUD.add(restored);
+      setInstructors(instructorCRUD.getAll());
+    });
   };
 
   const handleKanbanMove = (itemId: string, newStatus: string) => {
