@@ -219,7 +219,12 @@ export default function BudgetExpenses() {
                     <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[e.status])}>{e.status}</span></td>
                     <td className="p-3 text-xs text-muted-foreground">{e.phase}</td>
                     <td className="p-3 text-xs text-muted-foreground">{e.paymentDate || '—'}</td>
-                    <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        <button onClick={ev => { ev.stopPropagation(); duplicateExpense(e); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                        <button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {expenseSort.sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
