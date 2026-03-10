@@ -46,9 +46,15 @@ export default function Partnerships() {
 
   const handleDelete = (id: string) => {
     const item = items.find(i => i.id === id);
-    partnershipCRUD.remove(id);
-    if (item) logActivity('deleted', 'Partnerships', item.organisationName, getSettings().userName);
-    setItems(partnershipCRUD.getAll()); setEditItem(null);
+    if (!item) return;
+    deleteWithUndo(item.organisationName, item, () => {
+      partnershipCRUD.remove(id);
+      logActivity('deleted', 'Partnerships', item.organisationName, getSettings().userName);
+      setItems(partnershipCRUD.getAll()); setEditItem(null);
+    }, (restored) => {
+      partnershipCRUD.add(restored);
+      setItems(partnershipCRUD.getAll());
+    });
   };
 
   const handleExport = () => exportToCSV(items, 'partnerships', [

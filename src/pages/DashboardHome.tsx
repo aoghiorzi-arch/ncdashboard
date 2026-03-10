@@ -401,6 +401,9 @@ export default function DashboardHome() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
+      {/* Welcome Banner */}
+      <WelcomeBanner />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-base sm:text-lg font-semibold text-foreground">Dashboard Overview</h2>

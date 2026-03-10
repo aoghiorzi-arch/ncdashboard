@@ -297,7 +297,12 @@ export default function BudgetExpenses() {
                     <td className="p-3 text-right font-medium">£{i.amount.toLocaleString()}</td>
                     <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[i.status])}>{i.status}</span></td>
                     <td className="p-3 text-xs text-muted-foreground">{i.dateReceived || '—'}</td>
-                    <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteIncome(i.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        <button onClick={ev => { ev.stopPropagation(); duplicateIncome(i); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                        <button onClick={ev => { ev.stopPropagation(); handleDeleteIncome(i.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {incomeSort.sorted.length === 0 && <tr><td colSpan={6}><EmptyState icon={TrendingUp} title="No income recorded" description="Add your first income entry." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewIncomeOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Income</Button>} /></td></tr>}
