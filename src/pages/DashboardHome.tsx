@@ -90,6 +90,18 @@ export default function DashboardHome() {
 
   const widgetOrder = useMemo(() => widgets.map(w => w.id), [widgets]);
 
+  const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
+  const cycleStatus = useCallback((taskId: string) => {
+    const allTasks = getTasks();
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const idx = STATUSES.indexOf(task.status);
+    const nextStatus = STATUSES[(idx + 1) % STATUSES.length];
+    const updated = allTasks.map(t => t.id === taskId ? { ...t, status: nextStatus, updatedAt: new Date().toISOString() } : t);
+    saveTasks(updated);
+    setTasks(updated);
+  }, []);
+
   const openTasks = tasks.filter(t => t.status !== 'Complete');
   const overdueTasks = openTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
   const todayTasks = openTasks.filter(t => {
