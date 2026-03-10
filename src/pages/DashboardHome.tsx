@@ -10,6 +10,7 @@ import { StatusReport } from '@/components/StatusReport';
 import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import { WidgetCustomizer } from '@/components/WidgetCustomizer';
 import { ChecklistWidget } from '@/components/ChecklistWidget';
+import { WelcomeBanner } from '@/components/WelcomeBanner';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
