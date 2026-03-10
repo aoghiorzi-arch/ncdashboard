@@ -20,6 +20,8 @@ import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 import { GanttChart, type GanttItem } from '@/components/GanttChart';
 import { toast } from 'sonner';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { Copy } from 'lucide-react';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
