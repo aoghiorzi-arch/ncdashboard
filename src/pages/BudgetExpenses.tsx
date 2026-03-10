@@ -63,9 +63,23 @@ export default function BudgetExpenses() {
   };
   const handleDeleteExpense = (id: string) => {
     const item = expenses.find(e => e.id === id);
-    expenseCRUD.remove(id);
-    if (item) logActivity('deleted', 'Budget', item.description, settings.userName);
-    setExpenses(expenseCRUD.getAll()); setEditExpense(null);
+    if (!item) return;
+    deleteWithUndo(item.description, item, () => {
+      expenseCRUD.remove(id);
+      logActivity('deleted', 'Budget', item.description, settings.userName);
+      setExpenses(expenseCRUD.getAll()); setEditExpense(null);
+    }, (restored) => {
+      expenseCRUD.add(restored);
+      setExpenses(expenseCRUD.getAll());
+    });
+  };
+
+  const duplicateExpense = (e: Expense) => {
+    const dup: Expense = { ...e, id: generateId(), description: `${e.description} (Copy)`, status: 'Draft', createdAt: new Date().toISOString() };
+    expenseCRUD.add(dup);
+    logActivity('created', 'Budget', dup.description, settings.userName);
+    setExpenses(expenseCRUD.getAll());
+    sonnerToast.success(`Duplicated "${e.description}"`);
   };
 
   const handleSaveIncome = (i: Income) => {
