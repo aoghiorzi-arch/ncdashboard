@@ -68,8 +68,24 @@ export default function TaskManager() {
 
   const deleteTaskById = (id: string) => {
     const task = tasks.find(t => t.id === id);
-    if (task) logActivity('deleted', 'Tasks', task.title, getSettings().userName);
-    persist(tasks.filter(t => t.id !== id));
+    if (!task) return;
+    deleteWithUndo(task.title, task, () => {
+      logActivity('deleted', 'Tasks', task.title, getSettings().userName);
+      persist(tasks.filter(t => t.id !== id));
+    }, (restored) => {
+      const current = getTasks();
+      saveTasks([...current, restored]);
+      setTasks([...current, restored]);
+    });
+  };
+
+  const duplicateTask = (task: Task) => {
+    const now = new Date().toISOString();
+    const user = getSettings().userName;
+    const dup: Task = { ...task, id: generateId(), title: `${task.title} (Copy)`, status: 'Not Started', createdAt: now, updatedAt: now, createdBy: user };
+    persist([...tasks, dup]);
+    logActivity('created', 'Tasks', dup.title, user);
+    toast.success(`Duplicated "${task.title}"`);
   };
 
   const filtered = tasks.filter(t => {
