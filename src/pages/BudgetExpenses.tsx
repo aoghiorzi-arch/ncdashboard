@@ -12,8 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast as sonnerToast } from 'sonner';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
 const EXPENSE_STATUSES: Expense['status'][] = ['Draft', 'Approved', 'Paid', 'Disputed', 'Cancelled'];
