@@ -43,9 +43,24 @@ export default function EventsManager() {
 
   const handleDelete = (id: string) => {
     const ev = events.find(e => e.id === id);
-    eventCRUD.remove(id);
-    if (ev) logActivity('deleted', 'Events', ev.title, getSettings().userName);
-    setEvents(eventCRUD.getAll()); setEditEvent(null);
+    if (!ev) return;
+    deleteWithUndo(ev.title, ev, () => {
+      eventCRUD.remove(id);
+      logActivity('deleted', 'Events', ev.title, getSettings().userName);
+      setEvents(eventCRUD.getAll()); setEditEvent(null);
+    }, (restored) => {
+      eventCRUD.add(restored);
+      setEvents(eventCRUD.getAll());
+    });
+  };
+
+  const duplicateEvent = (ev: NCEvent) => {
+    const now = new Date().toISOString();
+    const dup: NCEvent = { ...ev, id: generateId(), title: `${ev.title} (Copy)`, status: 'Planning', createdAt: now, updatedAt: now };
+    eventCRUD.add(dup);
+    logActivity('created', 'Events', dup.title, getSettings().userName);
+    setEvents(eventCRUD.getAll());
+    toast.success(`Duplicated "${ev.title}"`);
   };
 
   const handleExport = () => exportToCSV(events, 'events', [
