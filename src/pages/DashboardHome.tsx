@@ -310,9 +310,9 @@ export default function DashboardHome() {
                   <tr key={task.id} className="border-b border-border/50 last:border-0">
                     <td className="py-2.5 font-medium text-foreground text-xs sm:text-sm">{task.title}</td>
                     <td>
-                      <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusColor[task.status])}>
+                      <button onClick={() => cycleStatus(task.id)} className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium cursor-pointer hover:ring-1 hover:ring-accent/50 transition-all', statusColor[task.status])} title="Click to cycle status">
                         {task.status}
-                      </span>
+                      </button>
                     </td>
                     <td className="text-muted-foreground text-xs hidden sm:table-cell">{task.dueDate || '—'}</td>
                   </tr>
