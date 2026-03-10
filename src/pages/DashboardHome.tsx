@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, DEFAULT_WIDGETS, type Task, type DashboardWidget } from '@/lib/storage';
+import { getTasks, saveTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, DEFAULT_WIDGETS, type Task, type DashboardWidget } from '@/lib/storage';
 import { KPICard } from '@/components/KPICard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { ProjectHealthScore } from '@/components/ProjectHealthScore';
