@@ -160,10 +160,11 @@ export default function BudgetExpenses() {
 
         <TabsContent value="expenses" className="space-y-4">
           <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={handleImportExpenses}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
             <Button variant="outline" size="sm" onClick={() => exportToCSV(expenses, 'expenses', [
               { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
               { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'phase', label: 'Phase' }, { key: 'paymentDate', label: 'Date' },
-            ])}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+            ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewExpenseOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> New Expense
             </Button>
