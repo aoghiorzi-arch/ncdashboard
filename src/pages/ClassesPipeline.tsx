@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Plus, Trash2, Download, Film, LayoutGrid, GanttChartSquare } from 'lucide-react';
+import { deleteWithUndo } from '@/lib/undoDelete';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/EmptyState';
 import { exportToCSV } from '@/lib/csv';
@@ -48,7 +49,17 @@ export default function ClassesPipeline() {
     setEditClass(null); setNewOpen(false);
   };
 
-  const handleDelete = (id: string) => { classCRUD.remove(id); setClasses(classCRUD.getAll()); setEditClass(null); };
+  const handleDelete = (id: string) => {
+    const item = classes.find(c => c.id === id);
+    if (!item) return;
+    deleteWithUndo(item.title, item, () => {
+      classCRUD.remove(id);
+      setClasses(classCRUD.getAll()); setEditClass(null);
+    }, (restored) => {
+      classCRUD.add(restored);
+      setClasses(classCRUD.getAll());
+    });
+  };
 
   const handleKanbanMove = (itemId: string, newStage: string) => {
     const item = classes.find(c => c.id === itemId);

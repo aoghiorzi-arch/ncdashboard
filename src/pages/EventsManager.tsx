@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, Users, CalendarDays, Download, PartyPopper } from 'lucide-react';
+import { Plus, Trash2, Users, CalendarDays, Download, PartyPopper, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast } from 'sonner';
 
 const EVENT_STATUSES: NCEvent['status'][] = ['Planning', 'Confirmed', 'In Progress', 'Complete', 'Cancelled'];
 const statusBadge: Record<string, string> = {
@@ -41,9 +43,24 @@ export default function EventsManager() {
 
   const handleDelete = (id: string) => {
     const ev = events.find(e => e.id === id);
-    eventCRUD.remove(id);
-    if (ev) logActivity('deleted', 'Events', ev.title, getSettings().userName);
-    setEvents(eventCRUD.getAll()); setEditEvent(null);
+    if (!ev) return;
+    deleteWithUndo(ev.title, ev, () => {
+      eventCRUD.remove(id);
+      logActivity('deleted', 'Events', ev.title, getSettings().userName);
+      setEvents(eventCRUD.getAll()); setEditEvent(null);
+    }, (restored) => {
+      eventCRUD.add(restored);
+      setEvents(eventCRUD.getAll());
+    });
+  };
+
+  const duplicateEvent = (ev: NCEvent) => {
+    const now = new Date().toISOString();
+    const dup: NCEvent = { ...ev, id: generateId(), title: `${ev.title} (Copy)`, status: 'Planning', createdAt: now, updatedAt: now };
+    eventCRUD.add(dup);
+    logActivity('created', 'Events', dup.title, getSettings().userName);
+    setEvents(eventCRUD.getAll());
+    toast.success(`Duplicated "${ev.title}"`);
   };
 
   const handleExport = () => exportToCSV(events, 'events', [
@@ -76,8 +93,9 @@ export default function EventsManager() {
                 <p className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{ev.guestList.length} guests • Capacity: {ev.capacity || '—'}</p>
                 <p>{ev.programme.length} programme segments</p>
               </div>
-              <div className="flex justify-end mt-3">
-                <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
+              <div className="flex justify-end mt-3 gap-2">
+                <button onClick={e => { e.stopPropagation(); duplicateEvent(ev); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))}

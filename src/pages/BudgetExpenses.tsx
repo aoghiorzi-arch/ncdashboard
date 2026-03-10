@@ -12,8 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast as sonnerToast } from 'sonner';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
 const EXPENSE_STATUSES: Expense['status'][] = ['Draft', 'Approved', 'Paid', 'Disputed', 'Cancelled'];
@@ -61,9 +63,23 @@ export default function BudgetExpenses() {
   };
   const handleDeleteExpense = (id: string) => {
     const item = expenses.find(e => e.id === id);
-    expenseCRUD.remove(id);
-    if (item) logActivity('deleted', 'Budget', item.description, settings.userName);
-    setExpenses(expenseCRUD.getAll()); setEditExpense(null);
+    if (!item) return;
+    deleteWithUndo(item.description, item, () => {
+      expenseCRUD.remove(id);
+      logActivity('deleted', 'Budget', item.description, settings.userName);
+      setExpenses(expenseCRUD.getAll()); setEditExpense(null);
+    }, (restored) => {
+      expenseCRUD.add(restored);
+      setExpenses(expenseCRUD.getAll());
+    });
+  };
+
+  const duplicateExpense = (e: Expense) => {
+    const dup: Expense = { ...e, id: generateId(), description: `${e.description} (Copy)`, status: 'Draft', createdAt: new Date().toISOString() };
+    expenseCRUD.add(dup);
+    logActivity('created', 'Budget', dup.description, settings.userName);
+    setExpenses(expenseCRUD.getAll());
+    sonnerToast.success(`Duplicated "${e.description}"`);
   };
 
   const handleSaveIncome = (i: Income) => {
@@ -74,9 +90,23 @@ export default function BudgetExpenses() {
   };
   const handleDeleteIncome = (id: string) => {
     const item = income.find(i => i.id === id);
-    incomeCRUD.remove(id);
-    if (item) logActivity('deleted', 'Income', item.description, settings.userName);
-    setIncome(incomeCRUD.getAll()); setEditIncome(null);
+    if (!item) return;
+    deleteWithUndo(item.description, item, () => {
+      incomeCRUD.remove(id);
+      logActivity('deleted', 'Income', item.description, settings.userName);
+      setIncome(incomeCRUD.getAll()); setEditIncome(null);
+    }, (restored) => {
+      incomeCRUD.add(restored);
+      setIncome(incomeCRUD.getAll());
+    });
+  };
+
+  const duplicateIncome = (i: Income) => {
+    const dup: Income = { ...i, id: generateId(), description: `${i.description} (Copy)`, status: 'Expected', createdAt: new Date().toISOString() };
+    incomeCRUD.add(dup);
+    logActivity('created', 'Income', dup.description, settings.userName);
+    setIncome(incomeCRUD.getAll());
+    sonnerToast.success(`Duplicated "${i.description}"`);
   };
 
   const { toast } = useToast();
@@ -120,6 +150,41 @@ export default function BudgetExpenses() {
       setExpenses(expenseCRUD.getAll());
       logActivity('imported', 'Budget', `${imported} expenses from CSV`, user);
       toast({ title: 'Import complete', description: `${imported} expense(s) imported successfully.` });
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'No file selected') {
+        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+      }
+    }
+  };
+
+  const handleImportIncome = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast({ title: 'Empty CSV', description: 'No data rows found.', variant: 'destructive' }); return; }
+      const now = new Date().toISOString();
+      const user = settings.userName;
+      let imported = 0;
+      rows.forEach(row => {
+        const description = row['Description'] || row['description'] || '';
+        if (!description) return;
+        const amount = parseFloat(row['Amount'] || row['amount'] || '0');
+        const inc: Income = {
+          id: generateId(),
+          description,
+          source: (row['Source'] || row['source'] || 'Other') as Income['source'],
+          amount: isNaN(amount) ? 0 : amount,
+          status: (row['Status'] || row['status'] || 'Expected') as Income['status'],
+          dateReceived: row['Date'] || row['Date Received'] || row['dateReceived'] || '',
+          reference: row['Reference'] || row['reference'] || '',
+          createdAt: now,
+        };
+        incomeCRUD.add(inc);
+        imported++;
+      });
+      setIncome(incomeCRUD.getAll());
+      logActivity('imported', 'Income', `${imported} income entries from CSV`, user);
+      toast({ title: 'Import complete', description: `${imported} income entry/entries imported successfully.` });
     } catch (err) {
       if (err instanceof Error && err.message !== 'No file selected') {
         toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
@@ -189,7 +254,12 @@ export default function BudgetExpenses() {
                     <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[e.status])}>{e.status}</span></td>
                     <td className="p-3 text-xs text-muted-foreground">{e.phase}</td>
                     <td className="p-3 text-xs text-muted-foreground">{e.paymentDate || '—'}</td>
-                    <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        <button onClick={ev => { ev.stopPropagation(); duplicateExpense(e); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                        <button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {expenseSort.sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
@@ -200,10 +270,11 @@ export default function BudgetExpenses() {
 
         <TabsContent value="income" className="space-y-4">
           <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={handleImportIncome}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
             <Button variant="outline" size="sm" onClick={() => exportToCSV(income, 'income', [
               { key: 'description', label: 'Description' }, { key: 'source', label: 'Source' },
               { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'dateReceived', label: 'Date' },
-            ])}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+            ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewIncomeOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> New Income
             </Button>
@@ -226,7 +297,12 @@ export default function BudgetExpenses() {
                     <td className="p-3 text-right font-medium">£{i.amount.toLocaleString()}</td>
                     <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[i.status])}>{i.status}</span></td>
                     <td className="p-3 text-xs text-muted-foreground">{i.dateReceived || '—'}</td>
-                    <td className="p-3"><button onClick={ev => { ev.stopPropagation(); handleDeleteIncome(i.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        <button onClick={ev => { ev.stopPropagation(); duplicateIncome(i); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                        <button onClick={ev => { ev.stopPropagation(); handleDeleteIncome(i.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {incomeSort.sorted.length === 0 && <tr><td colSpan={6}><EmptyState icon={TrendingUp} title="No income recorded" description="Add your first income entry." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewIncomeOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Income</Button>} /></td></tr>}

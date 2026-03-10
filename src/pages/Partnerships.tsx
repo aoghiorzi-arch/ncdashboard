@@ -11,6 +11,7 @@ import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Plus, Trash2, Handshake, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
 
 const TYPES: Partnership['type'][] = ['Church', 'Academic', 'Media', 'Funder', 'Supplier', 'Other'];
 const STATUSES: Partnership['status'][] = ['Identified', 'In Conversation', 'Agreed', 'Active', 'Dormant', 'Ended'];
@@ -45,9 +46,15 @@ export default function Partnerships() {
 
   const handleDelete = (id: string) => {
     const item = items.find(i => i.id === id);
-    partnershipCRUD.remove(id);
-    if (item) logActivity('deleted', 'Partnerships', item.organisationName, getSettings().userName);
-    setItems(partnershipCRUD.getAll()); setEditItem(null);
+    if (!item) return;
+    deleteWithUndo(item.organisationName, item, () => {
+      partnershipCRUD.remove(id);
+      logActivity('deleted', 'Partnerships', item.organisationName, getSettings().userName);
+      setItems(partnershipCRUD.getAll()); setEditItem(null);
+    }, (restored) => {
+      partnershipCRUD.add(restored);
+      setItems(partnershipCRUD.getAll());
+    });
   };
 
   const handleExport = () => exportToCSV(items, 'partnerships', [

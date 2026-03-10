@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, Star, Download, Users } from 'lucide-react';
+import { Plus, Trash2, Star, Download, Users, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast } from 'sonner';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 
 const STATUSES = ['Identified', 'Approached', 'In Conversation', 'Agreement Sent', 'Contracted', 'Class in Production', 'Class Live', 'Relationship Paused'];
@@ -55,10 +57,16 @@ export default function InstructorCRM() {
 
   const handleDelete = (id: string) => {
     const item = instructors.find(i => i.id === id);
-    instructorCRUD.remove(id);
-    if (item) logActivity('deleted', 'Instructors', item.fullName, getSettings().userName);
-    setInstructors(instructorCRUD.getAll());
-    setEditItem(null);
+    if (!item) return;
+    deleteWithUndo(item.fullName, item, () => {
+      instructorCRUD.remove(id);
+      logActivity('deleted', 'Instructors', item.fullName, getSettings().userName);
+      setInstructors(instructorCRUD.getAll());
+      setEditItem(null);
+    }, (restored) => {
+      instructorCRUD.add(restored);
+      setInstructors(instructorCRUD.getAll());
+    });
   };
 
   const handleKanbanMove = (itemId: string, newStatus: string) => {
@@ -155,7 +163,7 @@ export default function InstructorCRM() {
                   <td className="p-3 text-muted-foreground text-xs">{inst.specialism}</td>
                   <td className="p-3 text-muted-foreground text-xs">{inst.email}</td>
                   <td className="p-3"><div className="flex">{[1,2,3,4,5].map(s => <Star key={s} className={cn('w-3 h-3', s <= inst.rating ? 'text-accent fill-accent' : 'text-muted')} />)}</div></td>
-                  <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(inst.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                  <td className="p-3"><button onClick={e => { e.stopPropagation(); handleDelete(inst.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button></td>
                 </tr>
               ))}
               {sorted.length === 0 && <tr><td colSpan={6}><EmptyState icon={Users} title="No instructors yet" description="Add your first instructor to get started." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Instructor</Button>} /></td></tr>}

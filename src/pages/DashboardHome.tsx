@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, DEFAULT_WIDGETS, type Task, type DashboardWidget } from '@/lib/storage';
+import { getTasks, saveTasks, getExpenses, getSettings, classCRUD, generateRecurringTasks, DEFAULT_WIDGETS, type Task, type DashboardWidget } from '@/lib/storage';
 import { KPICard } from '@/components/KPICard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { ProjectHealthScore } from '@/components/ProjectHealthScore';
@@ -10,6 +10,7 @@ import { StatusReport } from '@/components/StatusReport';
 import { StatusReportPDFButton } from '@/components/StatusReportPDF';
 import { WidgetCustomizer } from '@/components/WidgetCustomizer';
 import { ChecklistWidget } from '@/components/ChecklistWidget';
+import { WelcomeBanner } from '@/components/WelcomeBanner';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
   AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
@@ -88,6 +89,18 @@ export default function DashboardHome() {
   };
 
   const widgetOrder = useMemo(() => widgets.map(w => w.id), [widgets]);
+
+  const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
+  const cycleStatus = useCallback((taskId: string) => {
+    const allTasks = getTasks();
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const idx = STATUSES.indexOf(task.status);
+    const nextStatus = STATUSES[(idx + 1) % STATUSES.length];
+    const updated = allTasks.map(t => t.id === taskId ? { ...t, status: nextStatus, updatedAt: new Date().toISOString() } : t);
+    saveTasks(updated);
+    setTasks(updated);
+  }, []);
 
   const openTasks = tasks.filter(t => t.status !== 'Complete');
   const overdueTasks = openTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
@@ -201,9 +214,9 @@ export default function DashboardHome() {
             {[...overdueTasks, ...todayTasks].slice(0, 10).map(task => (
               <li key={task.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <span className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap', statusColor[task.status])}>
+                  <button onClick={() => cycleStatus(task.id)} className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap cursor-pointer hover:ring-1 hover:ring-accent/50 transition-all', statusColor[task.status])} title="Click to cycle status">
                     {task.status}
-                  </span>
+                  </button>
                   <span className="text-xs sm:text-sm font-medium text-foreground truncate">{task.title}</span>
                 </div>
                 <span className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium shrink-0 ml-2', priorityColor[task.priority])}>
@@ -297,9 +310,9 @@ export default function DashboardHome() {
                   <tr key={task.id} className="border-b border-border/50 last:border-0">
                     <td className="py-2.5 font-medium text-foreground text-xs sm:text-sm">{task.title}</td>
                     <td>
-                      <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusColor[task.status])}>
+                      <button onClick={() => cycleStatus(task.id)} className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium cursor-pointer hover:ring-1 hover:ring-accent/50 transition-all', statusColor[task.status])} title="Click to cycle status">
                         {task.status}
-                      </span>
+                      </button>
                     </td>
                     <td className="text-muted-foreground text-xs hidden sm:table-cell">{task.dueDate || '—'}</td>
                   </tr>
@@ -400,6 +413,9 @@ export default function DashboardHome() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
+      {/* Welcome Banner */}
+      <WelcomeBanner />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-base sm:text-lg font-semibold text-foreground">Dashboard Overview</h2>

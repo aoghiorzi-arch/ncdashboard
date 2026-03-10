@@ -20,6 +20,8 @@ import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 import { TaskDependencyEditor, DependencyBadge } from '@/components/TaskDependencies';
 import { GanttChart, type GanttItem } from '@/components/GanttChart';
 import { toast } from 'sonner';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { Copy } from 'lucide-react';
 
 const STATUSES: Task['status'][] = ['Not Started', 'In Progress', 'Blocked', 'In Review', 'Complete'];
 const PRIORITIES: Task['priority'][] = ['Low', 'Medium', 'High', 'Critical'];
@@ -66,8 +68,24 @@ export default function TaskManager() {
 
   const deleteTaskById = (id: string) => {
     const task = tasks.find(t => t.id === id);
-    if (task) logActivity('deleted', 'Tasks', task.title, getSettings().userName);
-    persist(tasks.filter(t => t.id !== id));
+    if (!task) return;
+    deleteWithUndo(task.title, task, () => {
+      logActivity('deleted', 'Tasks', task.title, getSettings().userName);
+      persist(tasks.filter(t => t.id !== id));
+    }, (restored) => {
+      const current = getTasks();
+      saveTasks([...current, restored]);
+      setTasks([...current, restored]);
+    });
+  };
+
+  const duplicateTask = (task: Task) => {
+    const now = new Date().toISOString();
+    const user = getSettings().userName;
+    const dup: Task = { ...task, id: generateId(), title: `${task.title} (Copy)`, status: 'Not Started', createdAt: now, updatedAt: now, createdBy: user };
+    persist([...tasks, dup]);
+    logActivity('created', 'Tasks', dup.title, user);
+    toast.success(`Duplicated "${task.title}"`);
   };
 
   const filtered = tasks.filter(t => {
@@ -379,9 +397,14 @@ export default function TaskManager() {
                         {task.dueDate || '—'}
                       </td>
                       <td className="p-3">
-                        <button onClick={e => { e.stopPropagation(); deleteTaskById(task.id); }} className="text-muted-foreground hover:text-destructive transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={e => { e.stopPropagation(); duplicateTask(task); }} className="text-muted-foreground hover:text-accent transition-colors" title="Duplicate">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); deleteTaskById(task.id); }} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
