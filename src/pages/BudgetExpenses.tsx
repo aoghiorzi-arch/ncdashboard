@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { expenseCRUD, incomeCRUD, getSettings, generateId, type Expense, type Income } from '@/lib/storage';
 import { logActivity } from '@/lib/activityLog';
-import { exportToCSV } from '@/lib/csv';
+import { exportToCSV, importCSVFile, parseCSV } from '@/lib/csv';
+import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, TrendingUp, TrendingDown, Download, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
@@ -78,6 +79,54 @@ export default function BudgetExpenses() {
     setIncome(incomeCRUD.getAll()); setEditIncome(null);
   };
 
+  const { toast } = useToast();
+
+  const handleImportExpenses = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast({ title: 'Empty CSV', description: 'No data rows found.', variant: 'destructive' }); return; }
+      const now = new Date().toISOString();
+      const user = settings.userName;
+      let imported = 0;
+      rows.forEach(row => {
+        const description = row['Description'] || row['description'] || '';
+        if (!description) return;
+        const amount = parseFloat(row['Amount'] || row['amount'] || '0');
+        const expense: Expense = {
+          id: generateId(),
+          description,
+          category: row['Category'] || row['category'] || 'Miscellaneous',
+          supplier: row['Supplier'] || row['supplier'] || row['Payee'] || row['payee'] || '',
+          amount: isNaN(amount) ? 0 : amount,
+          status: (row['Status'] || row['status'] || 'Draft') as Expense['status'],
+          paymentMethod: (row['Payment Method'] || row['paymentMethod'] || 'Invoice') as Expense['paymentMethod'],
+          invoiceRef: row['Invoice Ref'] || row['invoiceRef'] || '',
+          invoiceDocLink: '',
+          budgetLine: row['Budget Line'] || row['budgetLine'] || '',
+          phase: (row['Phase'] || row['phase'] || 'Phase 1') as Expense['phase'],
+          paymentDate: row['Date'] || row['Payment Date'] || row['paymentDate'] || '',
+          recurring: false,
+          recurrenceType: 'none',
+          nextDueDate: '',
+          notes: row['Notes'] || row['notes'] || '',
+          createdBy: user,
+          approvedBy: '',
+          createdAt: now,
+        };
+        expenseCRUD.add(expense);
+        imported++;
+      });
+      setExpenses(expenseCRUD.getAll());
+      logActivity('imported', 'Budget', `${imported} expenses from CSV`, user);
+      toast({ title: 'Import complete', description: `${imported} expense(s) imported successfully.` });
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'No file selected') {
+        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
       {/* Budget Overview */}
@@ -111,10 +160,11 @@ export default function BudgetExpenses() {
 
         <TabsContent value="expenses" className="space-y-4">
           <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={handleImportExpenses}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
             <Button variant="outline" size="sm" onClick={() => exportToCSV(expenses, 'expenses', [
               { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
               { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'phase', label: 'Phase' }, { key: 'paymentDate', label: 'Date' },
-            ])}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+            ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewExpenseOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> New Expense
             </Button>
