@@ -214,9 +214,9 @@ export default function DashboardHome() {
             {[...overdueTasks, ...todayTasks].slice(0, 10).map(task => (
               <li key={task.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <span className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap', statusColor[task.status])}>
+                  <button onClick={() => cycleStatus(task.id)} className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap cursor-pointer hover:ring-1 hover:ring-accent/50 transition-all', statusColor[task.status])} title="Click to cycle status">
                     {task.status}
-                  </span>
+                  </button>
                   <span className="text-xs sm:text-sm font-medium text-foreground truncate">{task.title}</span>
                 </div>
                 <span className={cn('text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium shrink-0 ml-2', priorityColor[task.priority])}>
