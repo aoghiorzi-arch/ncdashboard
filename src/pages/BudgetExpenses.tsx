@@ -157,6 +157,41 @@ export default function BudgetExpenses() {
     }
   };
 
+  const handleImportIncome = async () => {
+    try {
+      const csvText = await importCSVFile();
+      const rows = parseCSV(csvText);
+      if (rows.length === 0) { toast({ title: 'Empty CSV', description: 'No data rows found.', variant: 'destructive' }); return; }
+      const now = new Date().toISOString();
+      const user = settings.userName;
+      let imported = 0;
+      rows.forEach(row => {
+        const description = row['Description'] || row['description'] || '';
+        if (!description) return;
+        const amount = parseFloat(row['Amount'] || row['amount'] || '0');
+        const inc: Income = {
+          id: generateId(),
+          description,
+          source: (row['Source'] || row['source'] || 'Other') as Income['source'],
+          amount: isNaN(amount) ? 0 : amount,
+          status: (row['Status'] || row['status'] || 'Expected') as Income['status'],
+          dateReceived: row['Date'] || row['Date Received'] || row['dateReceived'] || '',
+          reference: row['Reference'] || row['reference'] || '',
+          createdAt: now,
+        };
+        incomeCRUD.add(inc);
+        imported++;
+      });
+      setIncome(incomeCRUD.getAll());
+      logActivity('imported', 'Income', `${imported} income entries from CSV`, user);
+      toast({ title: 'Import complete', description: `${imported} income entry/entries imported successfully.` });
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'No file selected') {
+        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
       {/* Budget Overview */}
