@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, Star, Download, Users } from 'lucide-react';
+import { Plus, Trash2, Star, Download, Users, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { deleteWithUndo } from '@/lib/undoDelete';
+import { toast } from 'sonner';
 import { KanbanBoard, type KanbanCard } from '@/components/KanbanBoard';
 
 const STATUSES = ['Identified', 'Approached', 'In Conversation', 'Agreement Sent', 'Contracted', 'Class in Production', 'Class Live', 'Relationship Paused'];
