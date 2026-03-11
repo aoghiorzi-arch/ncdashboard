@@ -267,6 +267,37 @@ function ClassDialog({ cls, open, onOpenChange, onSave, onDelete, expenses }: {
             <div><label className="text-xs font-medium text-muted-foreground">Target Publication</label><Input type="date" className="mt-1" value={form.targetPublicationDate} onChange={e => u({ targetPublicationDate: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-muted-foreground">Actual Publication</label><Input type="date" className="mt-1" value={form.actualPublicationDate} onChange={e => u({ actualPublicationDate: e.target.value })} /></div>
           </div>
+
+          {/* Cost Summary */}
+          {cls && (() => {
+            const linkedExpenses = expenses.filter(e => e.classId === cls.id);
+            if (linkedExpenses.length === 0) return null;
+            const totalCost = linkedExpenses.reduce((s, e) => s + (e.totalAmount || e.amount), 0);
+            const totalPaid = linkedExpenses.reduce((s, e) => {
+              if (e.payments && e.payments.length > 0) return s + e.payments.filter(p => p.status === 'Paid').reduce((ps, p) => ps + p.amount, 0);
+              return s + (e.status === 'Paid' ? e.amount : 0);
+            }, 0);
+            return (
+              <div className="border rounded-lg p-3 space-y-2">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Cost Summary</h4>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Total: £{totalCost.toLocaleString()}</span>
+                  <span className="text-nc-success">Paid: £{totalPaid.toLocaleString()}</span>
+                  <span className="text-nc-warn">Remaining: £{(totalCost - totalPaid).toLocaleString()}</span>
+                </div>
+                <div className="space-y-1">
+                  {linkedExpenses.map(e => (
+                    <div key={e.id} className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span className="truncate flex-1">{e.description}</span>
+                      <span className="font-medium ml-2">£{(e.totalAmount || e.amount).toLocaleString()}</span>
+                      <span className={cn('ml-2 px-1.5 py-0.5 rounded-full', e.status === 'Paid' ? 'bg-nc-success/10 text-nc-success' : e.status === 'Partially Paid' ? 'bg-nc-warn/10 text-nc-warn' : 'bg-muted')}>{e.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="flex gap-2">
             <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.title.trim()) onSave(form); }} disabled={!form.title.trim()}>{cls ? 'Save' : 'Create'}</Button>
             {cls && <Button variant="destructive" onClick={() => onDelete(cls.id)}>Delete</Button>}

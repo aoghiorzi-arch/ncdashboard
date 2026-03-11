@@ -39,7 +39,7 @@ const CORE_MODULES: HelpSection[] = [
   },
   {
     id: 'instructors', icon: Users, title: 'Instructor CRM',
-    content: 'Manage instructor relationships through pipeline stages (Identified → Contacted → Agreed → Filming → Active → Alumni). Cards show avatar initials, specialism, and days-in-stage. Drag between columns to update status. Click to edit full profile including agreements, fees, and ratings.',
+    content: 'Manage instructor relationships through pipeline stages (Identified → Contacted → Agreed → Filming → Active → Alumni). Cards show avatar initials, specialism, and days-in-stage. Drag between columns to update status. Click to edit full profile including agreements, fees, ratings, **referral codes**, **revenue share rates** (default 15%), and **IRP eligibility windows**. A mini payout history table shows the last 6 months of commission and IRP distributions.',
     link: '/instructors', linkLabel: 'Go to Instructors',
   },
   {
