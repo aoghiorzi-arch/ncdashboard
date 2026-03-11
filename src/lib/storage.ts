@@ -153,13 +153,24 @@ export interface Partnership {
   updatedAt: string;
 }
 
+export interface PaymentInstalment {
+  id: string;
+  amount: number;
+  date: string;
+  reference: string;
+  status: 'Pending' | 'Paid';
+}
+
 export interface Expense {
   id: string;
   description: string;
   category: string;
   supplier: string;
   amount: number;
-  status: 'Draft' | 'Approved' | 'Paid' | 'Disputed' | 'Cancelled';
+  totalAmount?: number;
+  payments?: PaymentInstalment[];
+  classId?: string;
+  status: 'Draft' | 'Approved' | 'Paid' | 'Partially Paid' | 'Disputed' | 'Cancelled';
   paymentMethod: 'Invoice' | 'Card' | 'Transfer' | 'Other';
   invoiceRef: string;
   invoiceDocLink: string;
