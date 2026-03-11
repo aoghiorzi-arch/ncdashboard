@@ -119,6 +119,9 @@ Create the following lists on your SharePoint site. The **list names** must matc
 | Phone | Single line of text | |
 | Specialty | Single line of text | |
 | Status | Choice | Prospect, Contacted, Confirmed, Active, On Hold, Inactive |
+| ReferralCode | Single line of text | Unique referral code for revenue tracking |
+| RevenueShareRate | Number | Commission rate percentage (default 15) |
+| IRPEligibleUntil | Date | IRP eligibility end date (12 months post-launch) |
 | ExternalId | Single line of text | |
 | DataJSON | Multiple lines (plain) | |
 
