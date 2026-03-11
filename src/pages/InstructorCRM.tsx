@@ -240,6 +240,18 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
             <div className="flex gap-1 mt-1">{[1,2,3,4,5].map(s => <button key={s} onClick={() => u({ rating: s })}><Star className={cn('w-5 h-5', s <= form.rating ? 'text-accent fill-accent' : 'text-muted')} /></button>)}</div>
           </div>
           <Input placeholder="Tags (comma separated)" value={form.tags} onChange={e => u({ tags: e.target.value })} />
+
+          {/* Revenue Share Section */}
+          <div className="border rounded-lg p-3 space-y-2">
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Revenue Share</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div><label className="text-[10px] text-muted-foreground">Referral Code</label><Input className="h-7 text-xs mt-0.5" placeholder="e.g. PROF-SMITH" value={form.referralCode} onChange={e => u({ referralCode: e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">Commission Rate (%)</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.revenueShareRate || ''} onChange={e => u({ revenueShareRate: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">IRP Eligible Until</label><Input type="date" className="h-7 text-xs mt-0.5" value={form.irpEligibleUntil} onChange={e => u({ irpEligibleUntil: e.target.value })} /></div>
+            </div>
+            {item && <RevenueShareMiniTable instructorId={item.id} />}
+          </div>
+
           <div className="flex gap-2">
             <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.fullName.trim()) onSave(form); }} disabled={!form.fullName.trim()}>{item ? 'Save' : 'Create'}</Button>
             {item && <Button variant="destructive" onClick={() => onDelete(item.id)}>Delete</Button>}
