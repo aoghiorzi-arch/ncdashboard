@@ -85,6 +85,9 @@ export interface Instructor {
   rating: number;
   tags: string;
   notes: { id: string; text: string; author: string; timestamp: string }[];
+  referralCode: string;
+  revenueShareRate: number;
+  irpEligibleUntil: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -153,13 +156,24 @@ export interface Partnership {
   updatedAt: string;
 }
 
+export interface PaymentInstalment {
+  id: string;
+  amount: number;
+  date: string;
+  reference: string;
+  status: 'Pending' | 'Paid';
+}
+
 export interface Expense {
   id: string;
   description: string;
   category: string;
   supplier: string;
   amount: number;
-  status: 'Draft' | 'Approved' | 'Paid' | 'Disputed' | 'Cancelled';
+  totalAmount?: number;
+  payments?: PaymentInstalment[];
+  classId?: string;
+  status: 'Draft' | 'Approved' | 'Paid' | 'Partially Paid' | 'Disputed' | 'Cancelled';
   paymentMethod: 'Invoice' | 'Card' | 'Transfer' | 'Other';
   invoiceRef: string;
   invoiceDocLink: string;
@@ -415,6 +429,24 @@ export const incomeCRUD = createCRUD<Income>('nc_income');
 export const complianceCRUD = createCRUD<ComplianceItem>('nc_compliance');
 export const teamCRUD = createCRUD<TeamMember>('nc_team');
 export const metricCRUD = createCRUD<MetricEntry>('nc_metrics');
+export interface RevenueShareEntry {
+  id: string;
+  instructorId: string;
+  month: string;
+  directSalesRevenue: number;
+  commissionRate: number;
+  commissionAmount: number;
+  irpPoolTotal: number;
+  qualifiedCompletions: number;
+  totalPlatformCompletions: number;
+  irpShare: number;
+  status: 'Draft' | 'Approved' | 'Paid';
+  paymentDate: string;
+  notes: string;
+  createdAt: string;
+}
+
+export const revenueShareCRUD = createCRUD<RevenueShareEntry>('nc_revenue_share');
 export const checklistCRUD = createCRUD<Checklist>('nc_checklists');
 
 // Legacy compat
@@ -429,7 +461,7 @@ export const saveSettings = (s: NCSettings) => { setStore('nc_settings', s); not
 export const exportAllData = () => {
   const keys = ['nc_tasks','nc_calendar','nc_classes','nc_instructors','nc_documents',
     'nc_ideas','nc_events','nc_partnerships','nc_expenses','nc_income',
-    'nc_compliance','nc_team','nc_metrics','nc_checklists','nc_settings'];
+    'nc_compliance','nc_team','nc_metrics','nc_checklists','nc_revenue_share','nc_settings'];
   const data: Record<string, unknown> = { exportedAt: new Date().toISOString() };
   keys.forEach(k => { data[k] = getStore(k, k === 'nc_settings' ? DEFAULT_SETTINGS : []); });
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

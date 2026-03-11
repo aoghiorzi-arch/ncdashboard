@@ -119,6 +119,9 @@ Create the following lists on your SharePoint site. The **list names** must matc
 | Phone | Single line of text | |
 | Specialty | Single line of text | |
 | Status | Choice | Prospect, Contacted, Confirmed, Active, On Hold, Inactive |
+| ReferralCode | Single line of text | Unique referral code for revenue tracking |
+| RevenueShareRate | Number | Commission rate percentage (default 15) |
+| IRPEligibleUntil | Date | IRP eligibility end date (12 months post-launch) |
 | ExternalId | Single line of text | |
 | DataJSON | Multiple lines (plain) | |
 
@@ -126,11 +129,31 @@ Create the following lists on your SharePoint site. The **list names** must matc
 | Column | Type | Notes |
 |--------|------|-------|
 | Title | Single line of text | Description |
-| Amount | Number | Currency |
+| Amount | Number | Currency (paid so far) |
+| TotalAmount | Number | Full contracted amount |
+| Payments | Multiple lines (plain) | JSON array of payment instalments |
+| ClassId | Single line of text | Links to NC_Classes ExternalId |
 | Category | Single line of text | |
-| Status | Choice | Draft, Approved, Paid, Disputed, Cancelled |
+| Status | Choice | Draft, Approved, Partially Paid, Paid, Disputed, Cancelled |
 | BudgetLine | Single line of text | |
 | Phase | Choice | Phase 1, Phase 2, General Overhead |
+| PaymentDate | Date | |
+| ExternalId | Single line of text | |
+| DataJSON | Multiple lines (plain) | |
+
+#### NC_RevenueShare
+| Column | Type | Notes |
+|--------|------|-------|
+| Title | Single line of text | Month (YYYY-MM) |
+| InstructorId | Single line of text | Links to NC_Instructors ExternalId |
+| DirectSalesRevenue | Number | Net revenue from instructor's referral |
+| CommissionRate | Number | Percentage (default 15) |
+| CommissionAmount | Number | Calculated: DirectSalesRevenue × Rate |
+| IRPPoolTotal | Number | 7.5% of platform net revenue for that month |
+| QualifiedCompletions | Number | Learners ≥60% progress in instructor's class |
+| TotalPlatformCompletions | Number | All qualified completions across platform |
+| IRPShare | Number | Calculated: (QC / Total) × IRPPool |
+| Status | Choice | Draft, Approved, Paid |
 | PaymentDate | Date | |
 | ExternalId | Single line of text | |
 | DataJSON | Multiple lines (plain) | |

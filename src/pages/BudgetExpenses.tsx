@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { expenseCRUD, incomeCRUD, getSettings, generateId, type Expense, type Income } from '@/lib/storage';
+import { expenseCRUD, incomeCRUD, revenueShareCRUD, classCRUD, instructorCRUD, getSettings, generateId, type Expense, type Income, type RevenueShareEntry, type PaymentInstalment, type ClassRecord, type Instructor } from '@/lib/storage';
 import { logActivity } from '@/lib/activityLog';
 import { exportToCSV, importCSVFile, parseCSV } from '@/lib/csv';
 import { useToast } from '@/hooks/use-toast';
@@ -10,47 +10,75 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { SortableHeader, useSortableData } from '@/components/SortableHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank, Copy } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Download, Upload, PiggyBank, Copy, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { deleteWithUndo } from '@/lib/undoDelete';
 import { toast as sonnerToast } from 'sonner';
 
 const EXPENSE_CATS = ['Instructor Fees', 'Production', 'Platform & Tech', 'Legal & Compliance', 'Marketing', 'Events', 'Staff', 'Miscellaneous'];
-const EXPENSE_STATUSES: Expense['status'][] = ['Draft', 'Approved', 'Paid', 'Disputed', 'Cancelled'];
+const EXPENSE_STATUSES: Expense['status'][] = ['Draft', 'Approved', 'Partially Paid', 'Paid', 'Disputed', 'Cancelled'];
 const INCOME_SOURCES: Income['source'][] = ['Membership', 'Single Class', 'Founders', 'Grant', 'Sponsorship', 'Other'];
 const INCOME_STATUSES: Income['status'][] = ['Expected', 'Received', 'Refunded'];
+const RS_STATUSES: RevenueShareEntry['status'][] = ['Draft', 'Approved', 'Paid'];
 
 const statusBadge: Record<string, string> = {
   Draft: 'bg-muted text-muted-foreground', Approved: 'bg-accent/10 text-accent',
-  Paid: 'bg-nc-success/10 text-nc-success', Disputed: 'bg-nc-alert/10 text-nc-alert',
-  Cancelled: 'bg-secondary text-secondary-foreground',
+  Paid: 'bg-nc-success/10 text-nc-success', 'Partially Paid': 'bg-nc-warn/10 text-nc-warn',
+  Disputed: 'bg-nc-alert/10 text-nc-alert', Cancelled: 'bg-secondary text-secondary-foreground',
   Expected: 'bg-accent/10 text-accent', Received: 'bg-nc-success/10 text-nc-success',
   Refunded: 'bg-nc-warn/10 text-nc-warn',
 };
 
+function getExpensePaidAmount(e: Expense): number {
+  if (e.payments && e.payments.length > 0) {
+    return e.payments.filter(p => p.status === 'Paid').reduce((s, p) => s + p.amount, 0);
+  }
+  return e.status === 'Paid' ? e.amount : 0;
+}
+
+function getExpenseTotalAmount(e: Expense): number {
+  return e.totalAmount || e.amount;
+}
+
 export default function BudgetExpenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
+  const [revenueShares, setRevenueShares] = useState<RevenueShareEntry[]>([]);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
   const [editIncome, setEditIncome] = useState<Income | null>(null);
+  const [editRS, setEditRS] = useState<RevenueShareEntry | null>(null);
   const [newExpenseOpen, setNewExpenseOpen] = useState(false);
   const [newIncomeOpen, setNewIncomeOpen] = useState(false);
+  const [newRSOpen, setNewRSOpen] = useState(false);
+  const [classFilter, setClassFilter] = useState<string>('all');
 
-  const expenseSort = useSortableData(expenses, 'description');
+  const filteredExpenses = classFilter === 'all' ? expenses : expenses.filter(e => e.classId === classFilter);
+  const expenseSort = useSortableData(filteredExpenses, 'description');
   const incomeSort = useSortableData(income, 'description');
+  const rsSort = useSortableData(revenueShares, 'month');
+
+  const [classes, setClasses] = useState<ClassRecord[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
 
   useEffect(() => {
-    const refresh = () => { setExpenses(expenseCRUD.getAll()); setIncome(incomeCRUD.getAll()); };
+    const refresh = () => {
+      setExpenses(expenseCRUD.getAll());
+      setIncome(incomeCRUD.getAll());
+      setRevenueShares(revenueShareCRUD.getAll());
+      setClasses(classCRUD.getAll());
+      setInstructors(instructorCRUD.getAll());
+    };
     refresh();
     window.addEventListener('nc-data-change', refresh);
     return () => window.removeEventListener('nc-data-change', refresh);
   }, []);
 
   const settings = getSettings();
-  const committed = expenses.filter(e => e.status === 'Approved' || e.status === 'Paid').reduce((s, e) => s + e.amount, 0);
-  const spent = expenses.filter(e => e.status === 'Paid').reduce((s, e) => s + e.amount, 0);
+  const committed = expenses.filter(e => ['Approved', 'Paid', 'Partially Paid'].includes(e.status)).reduce((s, e) => s + getExpenseTotalAmount(e), 0);
+  const spent = expenses.reduce((s, e) => s + getExpensePaidAmount(e), 0);
   const totalIncome = income.filter(i => i.status === 'Received').reduce((s, i) => s + i.amount, 0);
   const remaining = settings.totalBudget - committed;
   const pct = settings.totalBudget > 0 ? Math.round((spent / settings.totalBudget) * 100) : 0;
@@ -75,7 +103,7 @@ export default function BudgetExpenses() {
   };
 
   const duplicateExpense = (e: Expense) => {
-    const dup: Expense = { ...e, id: generateId(), description: `${e.description} (Copy)`, status: 'Draft', createdAt: new Date().toISOString() };
+    const dup: Expense = { ...e, id: generateId(), description: `${e.description} (Copy)`, status: 'Draft', payments: [], createdAt: new Date().toISOString() };
     expenseCRUD.add(dup);
     logActivity('created', 'Budget', dup.description, settings.userName);
     setExpenses(expenseCRUD.getAll());
@@ -109,6 +137,25 @@ export default function BudgetExpenses() {
     sonnerToast.success(`Duplicated "${i.description}"`);
   };
 
+  const handleSaveRS = (rs: RevenueShareEntry) => {
+    const user = settings.userName;
+    if (editRS) { revenueShareCRUD.update(rs); logActivity('updated', 'Revenue Share', rs.month, user); }
+    else { revenueShareCRUD.add({ ...rs, id: generateId(), createdAt: new Date().toISOString() }); logActivity('created', 'Revenue Share', rs.month, user); }
+    setRevenueShares(revenueShareCRUD.getAll()); setEditRS(null); setNewRSOpen(false);
+  };
+  const handleDeleteRS = (id: string) => {
+    const item = revenueShares.find(r => r.id === id);
+    if (!item) return;
+    deleteWithUndo(`Revenue share ${item.month}`, item, () => {
+      revenueShareCRUD.remove(id);
+      logActivity('deleted', 'Revenue Share', item.month, settings.userName);
+      setRevenueShares(revenueShareCRUD.getAll()); setEditRS(null);
+    }, (restored) => {
+      revenueShareCRUD.add(restored);
+      setRevenueShares(revenueShareCRUD.getAll());
+    });
+  };
+
   const { toast } = useToast();
 
   const handleImportExpenses = async () => {
@@ -124,25 +171,19 @@ export default function BudgetExpenses() {
         if (!description) return;
         const amount = parseFloat(row['Amount'] || row['amount'] || '0');
         const expense: Expense = {
-          id: generateId(),
-          description,
+          id: generateId(), description,
           category: row['Category'] || row['category'] || 'Miscellaneous',
           supplier: row['Supplier'] || row['supplier'] || row['Payee'] || row['payee'] || '',
           amount: isNaN(amount) ? 0 : amount,
           status: (row['Status'] || row['status'] || 'Draft') as Expense['status'],
           paymentMethod: (row['Payment Method'] || row['paymentMethod'] || 'Invoice') as Expense['paymentMethod'],
           invoiceRef: row['Invoice Ref'] || row['invoiceRef'] || '',
-          invoiceDocLink: '',
-          budgetLine: row['Budget Line'] || row['budgetLine'] || '',
+          invoiceDocLink: '', budgetLine: row['Budget Line'] || row['budgetLine'] || '',
           phase: (row['Phase'] || row['phase'] || 'Phase 1') as Expense['phase'],
           paymentDate: row['Date'] || row['Payment Date'] || row['paymentDate'] || '',
-          recurring: false,
-          recurrenceType: 'none',
-          nextDueDate: '',
+          recurring: false, recurrenceType: 'none', nextDueDate: '',
           notes: row['Notes'] || row['notes'] || '',
-          createdBy: user,
-          approvedBy: '',
-          createdAt: now,
+          createdBy: user, approvedBy: '', createdAt: now,
         };
         expenseCRUD.add(expense);
         imported++;
@@ -170,8 +211,7 @@ export default function BudgetExpenses() {
         if (!description) return;
         const amount = parseFloat(row['Amount'] || row['amount'] || '0');
         const inc: Income = {
-          id: generateId(),
-          description,
+          id: generateId(), description,
           source: (row['Source'] || row['source'] || 'Other') as Income['source'],
           amount: isNaN(amount) ? 0 : amount,
           status: (row['Status'] || row['status'] || 'Expected') as Income['status'],
@@ -192,6 +232,19 @@ export default function BudgetExpenses() {
     }
   };
 
+  // Cost per class summary
+  const classExpenseSummary = classes.map(c => {
+    const linked = expenses.filter(e => e.classId === c.id);
+    const total = linked.reduce((s, e) => s + getExpenseTotalAmount(e), 0);
+    const paid = linked.reduce((s, e) => s + getExpensePaidAmount(e), 0);
+    return { id: c.id, title: c.title, count: linked.length, total, paid, remaining: total - paid };
+  }).filter(c => c.count > 0);
+
+  // Revenue share summary
+  const totalCommissions = revenueShares.reduce((s, r) => s + r.commissionAmount, 0);
+  const totalIRP = revenueShares.reduce((s, r) => s + r.irpShare, 0);
+  const outstandingRS = revenueShares.filter(r => r.status !== 'Paid').reduce((s, r) => s + r.commissionAmount + r.irpShare, 0);
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
       {/* Budget Overview */}
@@ -199,7 +252,7 @@ export default function BudgetExpenses() {
         {[
           { label: 'Total Budget', value: `£${settings.totalBudget.toLocaleString()}` },
           { label: 'Committed', value: `£${committed.toLocaleString()}` },
-          { label: 'Spent', value: `£${spent.toLocaleString()}` },
+          { label: 'Spent (Paid)', value: `£${spent.toLocaleString()}` },
           { label: 'Remaining', value: `£${remaining.toLocaleString()}`, alert: remaining / settings.totalBudget < 0.2 },
           { label: 'Income Received', value: `£${totalIncome.toLocaleString()}` },
         ].map(item => (
@@ -221,48 +274,79 @@ export default function BudgetExpenses() {
       </div>
 
       <Tabs defaultValue="expenses">
-        <TabsList><TabsTrigger value="expenses">Expenses</TabsTrigger><TabsTrigger value="income">Income</TabsTrigger></TabsList>
+        <TabsList>
+          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="income">Income</TabsTrigger>
+          <TabsTrigger value="revenue-share">Revenue Share</TabsTrigger>
+          <TabsTrigger value="cost-per-class">Cost per Class</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="expenses" className="space-y-4">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={handleImportExpenses}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
-            <Button variant="outline" size="sm" onClick={() => exportToCSV(expenses, 'expenses', [
-              { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
-              { key: 'amount', label: 'Amount' }, { key: 'status', label: 'Status' }, { key: 'phase', label: 'Phase' }, { key: 'paymentDate', label: 'Date' },
-            ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
-            <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewExpenseOpen(true)}>
-              <Plus className="w-4 h-4 mr-1" /> New Expense
-            </Button>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger className="w-48 h-8 text-xs"><SelectValue placeholder="Filter by class" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleImportExpenses}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
+              <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredExpenses, 'expenses', [
+                { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
+                { key: 'amount', label: 'Amount' }, { key: 'totalAmount', label: 'Total Amount' },
+                { key: 'status', label: 'Status' }, { key: 'phase', label: 'Phase' }, { key: 'paymentDate', label: 'Date' },
+              ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
+              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewExpenseOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> New Expense
+              </Button>
+            </div>
           </div>
           <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b">
                 <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
-                <th className="text-right p-3"><SortableHeader label="Amount" active={expenseSort.sortKey === 'amount'} direction={expenseSort.sortKey === 'amount' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('amount')} className="justify-end" /></th>
+                <th className="text-right p-3">Amount</th>
+                <th className="text-left p-3">Class</th>
                 <th className="text-left p-3"><SortableHeader label="Status" active={expenseSort.sortKey === 'status'} direction={expenseSort.sortKey === 'status' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('status')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Phase" active={expenseSort.sortKey === 'phase'} direction={expenseSort.sortKey === 'phase' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('phase')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Date" active={expenseSort.sortKey === 'paymentDate'} direction={expenseSort.sortKey === 'paymentDate' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('paymentDate')} /></th>
                 <th className="p-3"></th>
               </tr></thead>
               <tbody>
-                {expenseSort.sorted.map(e => (
-                  <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditExpense(e)}>
-                    <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingDown className="w-3.5 h-3.5 text-nc-alert shrink-0" />{e.description}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{e.category}</td>
-                    <td className="p-3 text-right font-medium">£{e.amount.toLocaleString()}</td>
-                    <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[e.status])}>{e.status}</span></td>
-                    <td className="p-3 text-xs text-muted-foreground">{e.phase}</td>
-                    <td className="p-3 text-xs text-muted-foreground">{e.paymentDate || '—'}</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-1">
-                        <button onClick={ev => { ev.stopPropagation(); duplicateExpense(e); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
-                        <button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {expenseSort.sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
+                {expenseSort.sorted.map(e => {
+                  const paidAmt = getExpensePaidAmount(e);
+                  const totalAmt = getExpenseTotalAmount(e);
+                  const hasInstalments = e.payments && e.payments.length > 0;
+                  const linkedClass = e.classId ? classes.find(c => c.id === e.classId) : null;
+                  return (
+                    <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditExpense(e)}>
+                      <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingDown className="w-3.5 h-3.5 text-nc-alert shrink-0" />{e.description}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{e.category}</td>
+                      <td className="p-3 text-right font-medium">
+                        {hasInstalments ? (
+                          <span className="text-xs">£{paidAmt.toLocaleString()} <span className="text-muted-foreground">/ £{totalAmt.toLocaleString()}</span></span>
+                        ) : (
+                          <span>£{e.amount.toLocaleString()}</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground">{linkedClass?.title || '—'}</td>
+                      <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[e.status])}>{e.status}</span></td>
+                      <td className="p-3 text-xs text-muted-foreground">{e.phase}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{e.paymentDate || '—'}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1">
+                          <button onClick={ev => { ev.stopPropagation(); duplicateExpense(e); }} className="text-muted-foreground hover:text-accent" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                          <button onClick={ev => { ev.stopPropagation(); handleDeleteExpense(e.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {expenseSort.sorted.length === 0 && <tr><td colSpan={8}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
               </tbody>
             </table>
           </div>
@@ -310,22 +394,146 @@ export default function BudgetExpenses() {
             </table>
           </div>
         </TabsContent>
+
+        <TabsContent value="revenue-share" className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="bg-card rounded-lg p-4 nc-shadow-card border-l-4 border-l-accent">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Total Commissions</p>
+              <p className="text-xl font-bold text-foreground mt-1">£{totalCommissions.toLocaleString()}</p>
+            </div>
+            <div className="bg-card rounded-lg p-4 nc-shadow-card border-l-4 border-l-accent">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Total IRP Distributed</p>
+              <p className="text-xl font-bold text-foreground mt-1">£{totalIRP.toLocaleString()}</p>
+            </div>
+            <div className={cn('bg-card rounded-lg p-4 nc-shadow-card border-l-4', outstandingRS > 0 ? 'border-l-nc-warn' : 'border-l-nc-success')}>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Outstanding</p>
+              <p className="text-xl font-bold text-foreground mt-1">£{outstandingRS.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportToCSV(revenueShares, 'revenue_share', [
+              { key: 'month', label: 'Month' }, { key: 'instructorId', label: 'Instructor ID' },
+              { key: 'directSalesRevenue', label: 'Direct Sales' }, { key: 'commissionAmount', label: 'Commission' },
+              { key: 'irpShare', label: 'IRP Share' }, { key: 'status', label: 'Status' },
+            ])}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
+            <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setNewRSOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" /> New Entry
+            </Button>
+          </div>
+          <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b">
+                <th className="text-left p-3">Month</th>
+                <th className="text-left p-3">Instructor</th>
+                <th className="text-right p-3">Direct Sales</th>
+                <th className="text-right p-3">Commission (15%)</th>
+                <th className="text-right p-3">IRP Share</th>
+                <th className="text-left p-3">Status</th>
+                <th className="p-3"></th>
+              </tr></thead>
+              <tbody>
+                {rsSort.sorted.map(r => {
+                  const inst = instructors.find(i => i.id === r.instructorId);
+                  return (
+                    <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditRS(r)}>
+                      <td className="p-3 font-medium text-foreground">{r.month}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{inst?.fullName || r.instructorId}</td>
+                      <td className="p-3 text-right font-medium">£{r.directSalesRevenue.toLocaleString()}</td>
+                      <td className="p-3 text-right font-medium">£{r.commissionAmount.toLocaleString()}</td>
+                      <td className="p-3 text-right font-medium">£{r.irpShare.toLocaleString()}</td>
+                      <td className="p-3"><span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[r.status])}>{r.status}</span></td>
+                      <td className="p-3">
+                        <button onClick={ev => { ev.stopPropagation(); handleDeleteRS(r.id); }} className="text-muted-foreground hover:text-nc-alert" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {rsSort.sorted.length === 0 && <tr><td colSpan={7}><EmptyState icon={Percent} title="No revenue share entries" description="Record monthly instructor revenue share calculations here." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewRSOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Entry</Button>} /></td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="cost-per-class" className="space-y-4">
+          {classExpenseSummary.length === 0 ? (
+            <EmptyState icon={PiggyBank} title="No class-linked expenses" description="Tag expenses to classes in the expense editor to see cost breakdowns here." />
+          ) : (
+            <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b">
+                  <th className="text-left p-3">Class</th>
+                  <th className="text-right p-3">Expenses</th>
+                  <th className="text-right p-3">Total Cost</th>
+                  <th className="text-right p-3">Paid</th>
+                  <th className="text-right p-3">Remaining</th>
+                  <th className="p-3">Progress</th>
+                </tr></thead>
+                <tbody>
+                  {classExpenseSummary.map(c => {
+                    const pctPaid = c.total > 0 ? Math.round((c.paid / c.total) * 100) : 0;
+                    return (
+                      <tr key={c.id} className="border-b border-border/50">
+                        <td className="p-3 font-medium text-foreground">{c.title}</td>
+                        <td className="p-3 text-right text-muted-foreground">{c.count}</td>
+                        <td className="p-3 text-right font-medium">£{c.total.toLocaleString()}</td>
+                        <td className="p-3 text-right font-medium text-nc-success">£{c.paid.toLocaleString()}</td>
+                        <td className="p-3 text-right font-medium text-nc-warn">£{c.remaining.toLocaleString()}</td>
+                        <td className="p-3 w-32"><Progress value={pctPaid} className="h-2" /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
-      <ExpenseDialog item={editExpense} open={!!editExpense || newExpenseOpen} onOpenChange={o => { if (!o) { setEditExpense(null); setNewExpenseOpen(false); } }} onSave={handleSaveExpense} onDelete={handleDeleteExpense} />
+      <ExpenseDialog item={editExpense} open={!!editExpense || newExpenseOpen} onOpenChange={o => { if (!o) { setEditExpense(null); setNewExpenseOpen(false); } }} onSave={handleSaveExpense} onDelete={handleDeleteExpense} classes={classes} />
       <IncomeDialog item={editIncome} open={!!editIncome || newIncomeOpen} onOpenChange={o => { if (!o) { setEditIncome(null); setNewIncomeOpen(false); } }} onSave={handleSaveIncome} onDelete={handleDeleteIncome} />
+      <RevenueShareDialog item={editRS} open={!!editRS || newRSOpen} onOpenChange={o => { if (!o) { setEditRS(null); setNewRSOpen(false); } }} onSave={handleSaveRS} onDelete={handleDeleteRS} instructors={instructors} />
     </div>
   );
 }
 
-function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete }: {
+function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: {
   item: Expense | null; open: boolean; onOpenChange: (o: boolean) => void;
-  onSave: (e: Expense) => void; onDelete: (id: string) => void;
+  onSave: (e: Expense) => void; onDelete: (id: string) => void; classes: ClassRecord[];
 }) {
-  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
+  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, totalAmount: 0, payments: [], status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
   const [form, setForm] = useState<Expense>(blank);
-  useEffect(() => { setForm(item || blank); }, [item]);
+  useEffect(() => { setForm(item ? { ...item, payments: item.payments || [], totalAmount: item.totalAmount || item.amount } : blank); }, [item]);
   const u = (p: Partial<Expense>) => setForm(f => ({ ...f, ...p }));
+
+  const payments = form.payments || [];
+  const paidSoFar = payments.filter(p => p.status === 'Paid').reduce((s, p) => s + p.amount, 0);
+  const totalAmt = form.totalAmount || form.amount;
+  const remainingBalance = totalAmt - paidSoFar;
+  const paymentPct = totalAmt > 0 ? Math.round((paidSoFar / totalAmt) * 100) : 0;
+
+  const addPayment = () => {
+    const newPayment: PaymentInstalment = { id: generateId(), amount: 0, date: '', reference: '', status: 'Pending' };
+    u({ payments: [...payments, newPayment] });
+  };
+  const updatePayment = (id: string, updates: Partial<PaymentInstalment>) => {
+    u({ payments: payments.map(p => p.id === id ? { ...p, ...updates } : p) });
+  };
+  const removePayment = (id: string) => {
+    u({ payments: payments.filter(p => p.id !== id) });
+  };
+
+  const handleSave = () => {
+    if (!form.description.trim()) return;
+    // Auto-derive status from payments
+    let derivedStatus = form.status;
+    if (payments.length > 0) {
+      const allPaid = payments.every(p => p.status === 'Paid');
+      const somePaid = payments.some(p => p.status === 'Paid');
+      if (allPaid && paidSoFar >= totalAmt) derivedStatus = 'Paid';
+      else if (somePaid) derivedStatus = 'Partially Paid';
+    }
+    onSave({ ...form, status: derivedStatus, amount: payments.length > 0 ? paidSoFar : form.amount });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -341,15 +549,18 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete }: {
                 <SelectContent>{EXPENSE_CATS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-xs font-medium text-muted-foreground">Amount (£)</label><Input type="number" className="mt-1" value={form.amount || ''} onChange={e => u({ amount: +e.target.value })} /></div>
+            <div><label className="text-xs font-medium text-muted-foreground">Total Amount (£)</label><Input type="number" className="mt-1" value={form.totalAmount || ''} onChange={e => u({ totalAmount: +e.target.value, amount: payments.length === 0 ? +e.target.value : form.amount })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input placeholder="Supplier / Payee" value={form.supplier} onChange={e => u({ supplier: e.target.value })} />
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Status</label>
-              <Select value={form.status} onValueChange={v => u({ status: v as Expense['status'] })}>
+              <label className="text-xs font-medium text-muted-foreground">Linked Class</label>
+              <Select value={form.classId || 'none'} onValueChange={v => u({ classId: v === 'none' ? undefined : v })}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{EXPENSE_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
           </div>
@@ -383,9 +594,45 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete }: {
               </Select>
             )}
           </div>
+
+          {/* Payments / Instalments */}
+          <div className="border rounded-lg p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Payment Instalments</h4>
+              <Button variant="outline" size="sm" onClick={addPayment} className="h-6 text-[10px]"><Plus className="w-3 h-3 mr-1" /> Add Payment</Button>
+            </div>
+            {payments.length > 0 && (
+              <>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Paid: £{paidSoFar.toLocaleString()} / £{totalAmt.toLocaleString()}</span>
+                  <span>Remaining: £{remainingBalance.toLocaleString()}</span>
+                </div>
+                <Progress value={paymentPct} className="h-1.5" />
+                {payments.map((p, idx) => (
+                  <div key={p.id} className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 items-end">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Amount</label>
+                      <Input type="number" className="h-7 text-xs" value={p.amount || ''} onChange={e => updatePayment(p.id, { amount: +e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Date</label>
+                      <Input type="date" className="h-7 text-xs" value={p.date} onChange={e => updatePayment(p.id, { date: e.target.value })} />
+                    </div>
+                    <Select value={p.status} onValueChange={v => updatePayment(p.id, { status: v as PaymentInstalment['status'] })}>
+                      <SelectTrigger className="h-7 w-24 text-[10px]"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Paid">Paid</SelectItem></SelectContent>
+                    </Select>
+                    <button onClick={() => removePayment(p.id)} className="text-muted-foreground hover:text-nc-alert pb-1"><Trash2 className="w-3 h-3" /></button>
+                  </div>
+                ))}
+              </>
+            )}
+            {payments.length === 0 && <p className="text-[10px] text-muted-foreground">No instalments — expense treated as single payment.</p>}
+          </div>
+
           <Textarea placeholder="Notes..." value={form.notes} onChange={e => u({ notes: e.target.value })} rows={2} />
           <div className="flex gap-2">
-            <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.description.trim()) onSave(form); }} disabled={!form.description.trim()}>{item ? 'Save' : 'Create'}</Button>
+            <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={!form.description.trim()}>{item ? 'Save' : 'Create'}</Button>
             {item && <Button variant="destructive" onClick={() => onDelete(item.id)}>Delete</Button>}
           </div>
         </div>
@@ -432,6 +679,99 @@ function IncomeDialog({ item, open, onOpenChange, onSave, onDelete }: {
           <Input placeholder="Reference" value={form.reference} onChange={e => u({ reference: e.target.value })} />
           <div className="flex gap-2">
             <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.description.trim()) onSave(form); }} disabled={!form.description.trim()}>{item ? 'Save' : 'Create'}</Button>
+            {item && <Button variant="destructive" onClick={() => onDelete(item.id)}>Delete</Button>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RevenueShareDialog({ item, open, onOpenChange, onSave, onDelete, instructors }: {
+  item: RevenueShareEntry | null; open: boolean; onOpenChange: (o: boolean) => void;
+  onSave: (rs: RevenueShareEntry) => void; onDelete: (id: string) => void; instructors: Instructor[];
+}) {
+  const blank: RevenueShareEntry = { id: '', instructorId: '', month: '', directSalesRevenue: 0, commissionRate: 15, commissionAmount: 0, irpPoolTotal: 0, qualifiedCompletions: 0, totalPlatformCompletions: 0, irpShare: 0, status: 'Draft', paymentDate: '', notes: '', createdAt: '' };
+  const [form, setForm] = useState<RevenueShareEntry>(blank);
+  useEffect(() => { setForm(item || blank); }, [item]);
+  const u = (p: Partial<RevenueShareEntry>) => {
+    setForm(f => {
+      const next = { ...f, ...p };
+      // Auto-calculate commission
+      next.commissionAmount = Math.round(next.directSalesRevenue * (next.commissionRate / 100) * 100) / 100;
+      // Auto-calculate IRP share
+      if (next.totalPlatformCompletions > 0) {
+        next.irpShare = Math.round((next.qualifiedCompletions / next.totalPlatformCompletions) * next.irpPoolTotal * 100) / 100;
+      } else {
+        next.irpShare = 0;
+      }
+      return next;
+    });
+  };
+
+  // Pre-fill commission rate from instructor
+  useEffect(() => {
+    if (form.instructorId) {
+      const inst = instructors.find(i => i.id === form.instructorId);
+      if (inst && inst.revenueShareRate) {
+        u({ commissionRate: inst.revenueShareRate });
+      }
+    }
+  }, [form.instructorId]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{item ? 'Edit Revenue Share Entry' : 'New Revenue Share Entry'}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Instructor</label>
+              <Select value={form.instructorId || 'none'} onValueChange={v => u({ instructorId: v === 'none' ? '' : v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Select —</SelectItem>
+                  {instructors.map(i => <SelectItem key={i.id} value={i.id}>{i.fullName}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><label className="text-xs font-medium text-muted-foreground">Month (YYYY-MM)</label><Input type="month" className="mt-1" value={form.month} onChange={e => u({ month: e.target.value })} /></div>
+          </div>
+
+          <div className="border rounded-lg p-3 space-y-2">
+            <h4 className="text-[10px] font-bold text-muted-foreground uppercase">Part 1 — Direct Sales Commission</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div><label className="text-[10px] text-muted-foreground">Net Revenue (£)</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.directSalesRevenue || ''} onChange={e => u({ directSalesRevenue: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">Rate (%)</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.commissionRate || ''} onChange={e => u({ commissionRate: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">Commission</label><p className="text-sm font-bold text-foreground mt-1">£{form.commissionAmount.toLocaleString()}</p></div>
+            </div>
+          </div>
+
+          <div className="border rounded-lg p-3 space-y-2">
+            <h4 className="text-[10px] font-bold text-muted-foreground uppercase">Part 2 — Instructor Revenue Pool (7.5%)</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-[10px] text-muted-foreground">IRP Pool Total (£)</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.irpPoolTotal || ''} onChange={e => u({ irpPoolTotal: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">Qualified Completions</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.qualifiedCompletions || ''} onChange={e => u({ qualifiedCompletions: +e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-[10px] text-muted-foreground">Total Platform Completions</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.totalPlatformCompletions || ''} onChange={e => u({ totalPlatformCompletions: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">IRP Share</label><p className="text-sm font-bold text-foreground mt-1">£{form.irpShare.toLocaleString()}</p></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Status</label>
+              <Select value={form.status} onValueChange={v => u({ status: v as RevenueShareEntry['status'] })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{RS_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><label className="text-xs font-medium text-muted-foreground">Payment Date</label><Input type="date" className="mt-1" value={form.paymentDate} onChange={e => u({ paymentDate: e.target.value })} /></div>
+          </div>
+          <Textarea placeholder="Notes..." value={form.notes} onChange={e => u({ notes: e.target.value })} rows={2} />
+          <div className="flex gap-2">
+            <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.instructorId && form.month) onSave(form); }} disabled={!form.instructorId || !form.month}>{item ? 'Save' : 'Create'}</Button>
             {item && <Button variant="destructive" onClick={() => onDelete(item.id)}>Delete</Button>}
           </div>
         </div>

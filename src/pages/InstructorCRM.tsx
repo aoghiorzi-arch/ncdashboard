@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { instructorCRUD, generateId, getSettings, type Instructor } from '@/lib/storage';
+import { instructorCRUD, revenueShareCRUD, generateId, getSettings, type Instructor, type RevenueShareEntry } from '@/lib/storage';
 import { logActivity } from '@/lib/activityLog';
 import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -185,7 +185,9 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
     id: '', fullName: '', title: '', institution: '', email: '', phone: '', specialism: '',
     categoryAlignment: '', adventistConnection: 'No', status: 'Identified', proposedClassTitles: '',
     agreementVersion: '', engagementFee: '', ipAssignmentStatus: 'N/A', filmingDates: '',
-    classesProduced: 0, lastContactDate: '', rating: 3, tags: '', notes: [], createdAt: '', updatedAt: '',
+    classesProduced: 0, lastContactDate: '', rating: 3, tags: '', notes: [],
+    referralCode: '', revenueShareRate: 15, irpEligibleUntil: '',
+    createdAt: '', updatedAt: '',
   };
   const [form, setForm] = useState<Instructor>(blank);
   useEffect(() => { setForm(item || blank); }, [item]);
@@ -238,6 +240,18 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
             <div className="flex gap-1 mt-1">{[1,2,3,4,5].map(s => <button key={s} onClick={() => u({ rating: s })}><Star className={cn('w-5 h-5', s <= form.rating ? 'text-accent fill-accent' : 'text-muted')} /></button>)}</div>
           </div>
           <Input placeholder="Tags (comma separated)" value={form.tags} onChange={e => u({ tags: e.target.value })} />
+
+          {/* Revenue Share Section */}
+          <div className="border rounded-lg p-3 space-y-2">
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Revenue Share</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div><label className="text-[10px] text-muted-foreground">Referral Code</label><Input className="h-7 text-xs mt-0.5" placeholder="e.g. PROF-SMITH" value={form.referralCode} onChange={e => u({ referralCode: e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">Commission Rate (%)</label><Input type="number" className="h-7 text-xs mt-0.5" value={form.revenueShareRate || ''} onChange={e => u({ revenueShareRate: +e.target.value })} /></div>
+              <div><label className="text-[10px] text-muted-foreground">IRP Eligible Until</label><Input type="date" className="h-7 text-xs mt-0.5" value={form.irpEligibleUntil} onChange={e => u({ irpEligibleUntil: e.target.value })} /></div>
+            </div>
+            {item && <RevenueShareMiniTable instructorId={item.id} />}
+          </div>
+
           <div className="flex gap-2">
             <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { if (form.fullName.trim()) onSave(form); }} disabled={!form.fullName.trim()}>{item ? 'Save' : 'Create'}</Button>
             {item && <Button variant="destructive" onClick={() => onDelete(item.id)}>Delete</Button>}
@@ -245,5 +259,28 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function RevenueShareMiniTable({ instructorId }: { instructorId: string }) {
+  const entries = revenueShareCRUD.getAll().filter(r => r.instructorId === instructorId).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 6);
+  if (entries.length === 0) return <p className="text-[10px] text-muted-foreground">No revenue share entries yet.</p>;
+  return (
+    <div className="mt-2">
+      <p className="text-[10px] font-medium text-muted-foreground mb-1">Recent Payouts (last 6 months)</p>
+      <table className="w-full text-[10px]">
+        <thead><tr className="border-b"><th className="text-left py-1">Month</th><th className="text-right py-1">Commission</th><th className="text-right py-1">IRP</th><th className="text-left py-1">Status</th></tr></thead>
+        <tbody>
+          {entries.map(r => (
+            <tr key={r.id} className="border-b border-border/30">
+              <td className="py-1">{r.month}</td>
+              <td className="py-1 text-right">£{r.commissionAmount.toLocaleString()}</td>
+              <td className="py-1 text-right">£{r.irpShare.toLocaleString()}</td>
+              <td className="py-1"><span className={cn('px-1.5 py-0.5 rounded-full', r.status === 'Paid' ? 'bg-nc-success/10 text-nc-success' : r.status === 'Approved' ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground')}>{r.status}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
