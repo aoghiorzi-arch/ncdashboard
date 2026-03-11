@@ -197,9 +197,9 @@ export default function ClassesPipeline() {
   );
 }
 
-function ClassDialog({ cls, open, onOpenChange, onSave, onDelete }: {
+function ClassDialog({ cls, open, onOpenChange, onSave, onDelete, expenses }: {
   cls: ClassRecord | null; open: boolean; onOpenChange: (o: boolean) => void;
-  onSave: (c: ClassRecord) => void; onDelete: (id: string) => void;
+  onSave: (c: ClassRecord) => void; onDelete: (id: string) => void; expenses: Expense[];
 }) {
   const blank: ClassRecord = {
     id: '', title: '', instructorName: '', category: '', subCategory: '',
