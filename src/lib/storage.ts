@@ -85,6 +85,9 @@ export interface Instructor {
   rating: number;
   tags: string;
   notes: { id: string; text: string; author: string; timestamp: string }[];
+  referralCode: string;
+  revenueShareRate: number;
+  irpEligibleUntil: string;
   createdAt: string;
   updatedAt: string;
 }
