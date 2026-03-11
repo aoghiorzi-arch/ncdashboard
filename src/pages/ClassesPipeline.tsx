@@ -192,7 +192,7 @@ export default function ClassesPipeline() {
         />
       )}
 
-      <ClassDialog cls={editClass} open={!!editClass || newOpen} onOpenChange={o => { if (!o) { setEditClass(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
+      <ClassDialog cls={editClass} open={!!editClass || newOpen} onOpenChange={o => { if (!o) { setEditClass(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} expenses={expenseCRUD.getAll()} />
     </div>
   );
 }
