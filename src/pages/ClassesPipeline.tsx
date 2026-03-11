@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { classCRUD, generateId, type ClassRecord } from '@/lib/storage';
+import { classCRUD, expenseCRUD, generateId, type ClassRecord, type Expense } from '@/lib/storage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
