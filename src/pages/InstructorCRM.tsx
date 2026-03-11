@@ -185,7 +185,9 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
     id: '', fullName: '', title: '', institution: '', email: '', phone: '', specialism: '',
     categoryAlignment: '', adventistConnection: 'No', status: 'Identified', proposedClassTitles: '',
     agreementVersion: '', engagementFee: '', ipAssignmentStatus: 'N/A', filmingDates: '',
-    classesProduced: 0, lastContactDate: '', rating: 3, tags: '', notes: [], createdAt: '', updatedAt: '',
+    classesProduced: 0, lastContactDate: '', rating: 3, tags: '', notes: [],
+    referralCode: '', revenueShareRate: 15, irpEligibleUntil: '',
+    createdAt: '', updatedAt: '',
   };
   const [form, setForm] = useState<Instructor>(blank);
   useEffect(() => { setForm(item || blank); }, [item]);
