@@ -429,6 +429,24 @@ export const incomeCRUD = createCRUD<Income>('nc_income');
 export const complianceCRUD = createCRUD<ComplianceItem>('nc_compliance');
 export const teamCRUD = createCRUD<TeamMember>('nc_team');
 export const metricCRUD = createCRUD<MetricEntry>('nc_metrics');
+export interface RevenueShareEntry {
+  id: string;
+  instructorId: string;
+  month: string;
+  directSalesRevenue: number;
+  commissionRate: number;
+  commissionAmount: number;
+  irpPoolTotal: number;
+  qualifiedCompletions: number;
+  totalPlatformCompletions: number;
+  irpShare: number;
+  status: 'Draft' | 'Approved' | 'Paid';
+  paymentDate: string;
+  notes: string;
+  createdAt: string;
+}
+
+export const revenueShareCRUD = createCRUD<RevenueShareEntry>('nc_revenue_share');
 export const checklistCRUD = createCRUD<Checklist>('nc_checklists');
 
 // Legacy compat

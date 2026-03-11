@@ -261,3 +261,26 @@ function InstructorDialog({ item, open, onOpenChange, onSave, onDelete }: {
     </Dialog>
   );
 }
+
+function RevenueShareMiniTable({ instructorId }: { instructorId: string }) {
+  const entries = revenueShareCRUD.getAll().filter(r => r.instructorId === instructorId).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 6);
+  if (entries.length === 0) return <p className="text-[10px] text-muted-foreground">No revenue share entries yet.</p>;
+  return (
+    <div className="mt-2">
+      <p className="text-[10px] font-medium text-muted-foreground mb-1">Recent Payouts (last 6 months)</p>
+      <table className="w-full text-[10px]">
+        <thead><tr className="border-b"><th className="text-left py-1">Month</th><th className="text-right py-1">Commission</th><th className="text-right py-1">IRP</th><th className="text-left py-1">Status</th></tr></thead>
+        <tbody>
+          {entries.map(r => (
+            <tr key={r.id} className="border-b border-border/30">
+              <td className="py-1">{r.month}</td>
+              <td className="py-1 text-right">£{r.commissionAmount.toLocaleString()}</td>
+              <td className="py-1 text-right">£{r.irpShare.toLocaleString()}</td>
+              <td className="py-1"><span className={cn('px-1.5 py-0.5 rounded-full', r.status === 'Paid' ? 'bg-nc-success/10 text-nc-success' : r.status === 'Approved' ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground')}>{r.status}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
