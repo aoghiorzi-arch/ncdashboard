@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { instructorCRUD, generateId, getSettings, type Instructor } from '@/lib/storage';
+import { instructorCRUD, revenueShareCRUD, generateId, getSettings, type Instructor, type RevenueShareEntry } from '@/lib/storage';
 import { logActivity } from '@/lib/activityLog';
 import { exportToCSV } from '@/lib/csv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
