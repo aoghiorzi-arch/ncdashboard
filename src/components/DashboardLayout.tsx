@@ -63,7 +63,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       {NAV_SECTIONS.map(section => (
         <div key={section.label}>
           {!collapsed && (
-            <p className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+            <p className="px-4 mb-0.5 mt-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
               {section.label}
             </p>
           )}
