@@ -542,7 +542,10 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
       if (allPaid && paidSoFar >= totalAmt) derivedStatus = 'Paid';
       else if (somePaid) derivedStatus = 'Partially Paid';
     }
-    onSave({ ...form, status: derivedStatus, amount: payments.length > 0 ? paidSoFar : form.amount });
+    // Auto-populate paymentDate from latest paid payment
+    const paidPayments = payments.filter(p => p.status === 'Paid' && p.date).sort((a, b) => b.date.localeCompare(a.date));
+    const derivedPaymentDate = paidPayments.length > 0 ? paidPayments[0].date : form.paymentDate;
+    onSave({ ...form, status: derivedStatus, amount: payments.length > 0 ? paidSoFar : form.amount, paymentDate: derivedPaymentDate });
   };
 
   return (
