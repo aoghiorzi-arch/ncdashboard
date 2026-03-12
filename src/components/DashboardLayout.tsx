@@ -59,7 +59,7 @@ const NAV_SECTIONS = [
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   return (
-    <nav className="flex-1 overflow-y-auto py-3 space-y-4">
+    <nav className="flex-1 overflow-y-auto py-1 space-y-1">
       {NAV_SECTIONS.map(section => (
         <div key={section.label}>
           {!collapsed && (
