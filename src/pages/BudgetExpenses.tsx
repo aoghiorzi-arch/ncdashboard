@@ -326,6 +326,7 @@ export default function BudgetExpenses() {
                   return (
                     <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditExpense(e)}>
                       <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingDown className="w-3.5 h-3.5 text-nc-alert shrink-0" />{e.description}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{e.supplier || '—'}</td>
                       <td className="p-3 text-xs text-muted-foreground">{e.category}</td>
                       <td className="p-3 text-right font-medium">
                         {hasInstalments ? (
