@@ -597,7 +597,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
           {/* Payments / Instalments */}
           <div className="border rounded-lg p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Payment Instalments</h4>
+              <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Payments</h4>
               <Button variant="outline" size="sm" onClick={addPayment} className="h-6 text-[10px]"><Plus className="w-3 h-3 mr-1" /> Add Payment</Button>
             </div>
             {payments.length > 0 && (
