@@ -7,6 +7,8 @@ import {
   Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logoBlack from '@/assets/logo-black.png';
+import logoWhite from '@/assets/logo-white.png';
 import { QuickAddDialog } from './QuickAddDialog';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
