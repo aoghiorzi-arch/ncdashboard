@@ -637,7 +637,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
                 ))}
               </>
             )}
-            {payments.length === 0 && <p className="text-[10px] text-muted-foreground">No instalments — expense treated as single payment.</p>}
+            {payments.length === 0 && <p className="text-[10px] text-muted-foreground">No payments added yet. Click "Add Payment" to record a payment.</p>}
           </div>
 
           <Textarea placeholder="Notes..." value={form.notes} onChange={e => u({ notes: e.target.value })} rows={2} />

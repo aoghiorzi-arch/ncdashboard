@@ -143,13 +143,9 @@ export function DashboardLayout() {
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
-          <div className="flex items-center gap-3 px-4 h-14 border-b border-sidebar-border">
-            <div className="w-7 h-7 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">
-              NC
-            </div>
-            <span className="font-semibold text-sm tracking-wide truncate">
-              Newbold Connect
-            </span>
+          <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
+            <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
+            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
           </div>
           <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
