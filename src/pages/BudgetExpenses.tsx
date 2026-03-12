@@ -348,7 +348,7 @@ export default function BudgetExpenses() {
                     </tr>
                   );
                 })}
-                {expenseSort.sorted.length === 0 && <tr><td colSpan={8}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
+                {expenseSort.sorted.length === 0 && <tr><td colSpan={9}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
               </tbody>
             </table>
           </div>
