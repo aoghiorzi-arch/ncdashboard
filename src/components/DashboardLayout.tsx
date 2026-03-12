@@ -76,7 +76,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 px-4 py-2 text-[13px] font-medium rounded-md mx-1 transition-colors',
+                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-colors',
                       active
                         ? 'bg-sidebar-accent text-sidebar-primary'
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
