@@ -7,6 +7,8 @@ import {
   Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logoBlack from '@/assets/logo-black.png';
+import logoWhite from '@/assets/logo-white.png';
 import { QuickAddDialog } from './QuickAddDialog';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
@@ -119,14 +121,14 @@ export function DashboardLayout() {
           collapsed ? 'w-14' : 'w-60'
         )}
       >
-        <div className="flex items-center gap-3 px-4 h-14 border-b border-sidebar-border">
-          <div className="w-7 h-7 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">
-            NC
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-sm tracking-wide truncate">
-              Newbold Connect
-            </span>
+        <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
+          {collapsed ? (
+            <div className="w-8 h-8 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">NC</div>
+          ) : (
+            <>
+              <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
+              <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
+            </>
           )}
         </div>
         <SidebarNav collapsed={collapsed} />
@@ -141,13 +143,9 @@ export function DashboardLayout() {
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
-          <div className="flex items-center gap-3 px-4 h-14 border-b border-sidebar-border">
-            <div className="w-7 h-7 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">
-              NC
-            </div>
-            <span className="font-semibold text-sm tracking-wide truncate">
-              Newbold Connect
-            </span>
+          <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
+            <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
+            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
           </div>
           <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>

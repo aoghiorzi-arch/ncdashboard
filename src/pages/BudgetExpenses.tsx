@@ -307,10 +307,11 @@ export default function BudgetExpenses() {
           <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b">
-                <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
-                <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
-                <th className="text-right p-3">Amount</th>
-                <th className="text-left p-3">Class</th>
+                 <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
+                 <th className="text-left p-3"><SortableHeader label="Supplier" active={expenseSort.sortKey === 'supplier'} direction={expenseSort.sortKey === 'supplier' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('supplier')} /></th>
+                 <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
+                 <th className="text-right p-3">Amount</th>
+                 <th className="text-left p-3">Class</th>
                 <th className="text-left p-3"><SortableHeader label="Status" active={expenseSort.sortKey === 'status'} direction={expenseSort.sortKey === 'status' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('status')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Phase" active={expenseSort.sortKey === 'phase'} direction={expenseSort.sortKey === 'phase' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('phase')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Date" active={expenseSort.sortKey === 'paymentDate'} direction={expenseSort.sortKey === 'paymentDate' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('paymentDate')} /></th>
@@ -325,6 +326,7 @@ export default function BudgetExpenses() {
                   return (
                     <tr key={e.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => setEditExpense(e)}>
                       <td className="p-3 font-medium text-foreground flex items-center gap-2"><TrendingDown className="w-3.5 h-3.5 text-nc-alert shrink-0" />{e.description}</td>
+                      <td className="p-3 text-xs text-muted-foreground">{e.supplier || '—'}</td>
                       <td className="p-3 text-xs text-muted-foreground">{e.category}</td>
                       <td className="p-3 text-right font-medium">
                         {hasInstalments ? (
@@ -346,7 +348,7 @@ export default function BudgetExpenses() {
                     </tr>
                   );
                 })}
-                {expenseSort.sorted.length === 0 && <tr><td colSpan={8}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
+                {expenseSort.sorted.length === 0 && <tr><td colSpan={9}><EmptyState icon={PiggyBank} title="No expenses recorded" description="Add your first expense to start tracking your budget." action={<Button size="sm" className="bg-accent text-accent-foreground" onClick={() => setNewExpenseOpen(true)}><Plus className="w-4 h-4 mr-1" /> New Expense</Button>} /></td></tr>}
               </tbody>
             </table>
           </div>
@@ -500,9 +502,17 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
   item: Expense | null; open: boolean; onOpenChange: (o: boolean) => void;
   onSave: (e: Expense) => void; onDelete: (id: string) => void; classes: ClassRecord[];
 }) {
-  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, totalAmount: 0, payments: [], status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
+  const defaultPayment: PaymentInstalment = { id: generateId(), amount: 0, date: '', reference: '', status: 'Pending' };
+  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, totalAmount: 0, payments: [defaultPayment], status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
   const [form, setForm] = useState<Expense>(blank);
-  useEffect(() => { setForm(item ? { ...item, payments: item.payments || [], totalAmount: item.totalAmount || item.amount } : blank); }, [item]);
+  useEffect(() => {
+    if (item) {
+      const p = item.payments && item.payments.length > 0 ? item.payments : [{ id: generateId(), amount: item.amount || 0, date: item.paymentDate || '', reference: '', status: (item.status === 'Paid' ? 'Paid' : 'Pending') as PaymentInstalment['status'] }];
+      setForm({ ...item, payments: p, totalAmount: item.totalAmount || item.amount });
+    } else {
+      setForm({ ...blank, payments: [{ id: generateId(), amount: 0, date: '', reference: '', status: 'Pending' }] });
+    }
+  }, [item]);
   const u = (p: Partial<Expense>) => setForm(f => ({ ...f, ...p }));
 
   const payments = form.payments || [];
@@ -532,7 +542,10 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
       if (allPaid && paidSoFar >= totalAmt) derivedStatus = 'Paid';
       else if (somePaid) derivedStatus = 'Partially Paid';
     }
-    onSave({ ...form, status: derivedStatus, amount: payments.length > 0 ? paidSoFar : form.amount });
+    // Auto-populate paymentDate from latest paid payment
+    const paidPayments = payments.filter(p => p.status === 'Paid' && p.date).sort((a, b) => b.date.localeCompare(a.date));
+    const derivedPaymentDate = paidPayments.length > 0 ? paidPayments[0].date : form.paymentDate;
+    onSave({ ...form, status: derivedStatus, amount: payments.length > 0 ? paidSoFar : form.amount, paymentDate: derivedPaymentDate });
   };
 
   return (
@@ -580,10 +593,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Invoice/Receipt ref" value={form.invoiceRef} onChange={e => u({ invoiceRef: e.target.value })} />
-            <div><label className="text-xs font-medium text-muted-foreground">Payment Date</label><Input type="date" className="mt-1" value={form.paymentDate} onChange={e => u({ paymentDate: e.target.value })} /></div>
-          </div>
+          <Input placeholder="Invoice/Receipt ref" value={form.invoiceRef} onChange={e => u({ invoiceRef: e.target.value })} />
           <div className="flex items-center gap-3">
             <Switch checked={form.recurring} onCheckedChange={v => u({ recurring: v })} />
             <label className="text-xs font-medium text-muted-foreground">Recurring</label>
@@ -598,7 +608,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
           {/* Payments / Instalments */}
           <div className="border rounded-lg p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Payment Instalments</h4>
+              <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">Payments</h4>
               <Button variant="outline" size="sm" onClick={addPayment} className="h-6 text-[10px]"><Plus className="w-3 h-3 mr-1" /> Add Payment</Button>
             </div>
             {payments.length > 0 && (
@@ -627,7 +637,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
                 ))}
               </>
             )}
-            {payments.length === 0 && <p className="text-[10px] text-muted-foreground">No instalments — expense treated as single payment.</p>}
+            {payments.length === 0 && <p className="text-[10px] text-muted-foreground">No payments added yet. Click "Add Payment" to record a payment.</p>}
           </div>
 
           <Textarea placeholder="Notes..." value={form.notes} onChange={e => u({ notes: e.target.value })} rows={2} />
