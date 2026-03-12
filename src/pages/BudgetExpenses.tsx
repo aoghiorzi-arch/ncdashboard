@@ -502,9 +502,17 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
   item: Expense | null; open: boolean; onOpenChange: (o: boolean) => void;
   onSave: (e: Expense) => void; onDelete: (id: string) => void; classes: ClassRecord[];
 }) {
-  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, totalAmount: 0, payments: [], status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
+  const defaultPayment: PaymentInstalment = { id: generateId(), amount: 0, date: '', reference: '', status: 'Pending' };
+  const blank: Expense = { id: '', description: '', category: 'Miscellaneous', supplier: '', amount: 0, totalAmount: 0, payments: [defaultPayment], status: 'Draft', paymentMethod: 'Invoice', invoiceRef: '', invoiceDocLink: '', budgetLine: '', phase: 'Phase 1', paymentDate: '', recurring: false, recurrenceType: 'none', nextDueDate: '', notes: '', createdBy: '', approvedBy: '', createdAt: '' };
   const [form, setForm] = useState<Expense>(blank);
-  useEffect(() => { setForm(item ? { ...item, payments: item.payments || [], totalAmount: item.totalAmount || item.amount } : blank); }, [item]);
+  useEffect(() => {
+    if (item) {
+      const p = item.payments && item.payments.length > 0 ? item.payments : [{ id: generateId(), amount: item.amount || 0, date: item.paymentDate || '', reference: '', status: (item.status === 'Paid' ? 'Paid' : 'Pending') as PaymentInstalment['status'] }];
+      setForm({ ...item, payments: p, totalAmount: item.totalAmount || item.amount });
+    } else {
+      setForm({ ...blank, payments: [{ id: generateId(), amount: 0, date: '', reference: '', status: 'Pending' }] });
+    }
+  }, [item]);
   const u = (p: Partial<Expense>) => setForm(f => ({ ...f, ...p }));
 
   const payments = form.payments || [];
