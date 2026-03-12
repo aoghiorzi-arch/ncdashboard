@@ -121,14 +121,11 @@ export function DashboardLayout() {
           collapsed ? 'w-14' : 'w-60'
         )}
       >
-        <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
+        <div className="flex items-center px-3 h-14 border-b border-sidebar-border shrink-0">
           {collapsed ? (
             <div className="w-8 h-8 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">NC</div>
           ) : (
-            <>
-              <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
-              <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
-            </>
+            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain" />
           )}
         </div>
         <SidebarNav collapsed={collapsed} />
