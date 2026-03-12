@@ -59,11 +59,11 @@ const NAV_SECTIONS = [
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   return (
-    <nav className="flex-1 overflow-y-auto py-3 space-y-4">
+    <nav className="flex-1 overflow-y-auto py-1 space-y-1">
       {NAV_SECTIONS.map(section => (
         <div key={section.label}>
           {!collapsed && (
-            <p className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+            <p className="px-4 mb-0.5 mt-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
               {section.label}
             </p>
           )}
@@ -76,7 +76,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 px-4 py-2 text-[13px] font-medium rounded-md mx-1 transition-colors',
+                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-colors',
                       active
                         ? 'bg-sidebar-accent text-sidebar-primary'
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -121,14 +121,11 @@ export function DashboardLayout() {
           collapsed ? 'w-14' : 'w-60'
         )}
       >
-        <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
+        <div className="flex items-center px-3 h-14 border-b border-sidebar-border shrink-0">
           {collapsed ? (
             <div className="w-8 h-8 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">NC</div>
           ) : (
-            <>
-              <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
-              <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
-            </>
+            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain" />
           )}
         </div>
         <SidebarNav collapsed={collapsed} />
@@ -143,9 +140,8 @@ export function DashboardLayout() {
       {/* Mobile Sidebar (Sheet) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
-          <div className="flex items-center px-3 h-14 border-b border-sidebar-border">
-            <img src={logoBlack} alt="Newbold Connect" className="h-8 object-contain dark:hidden" />
-            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain hidden dark:block" />
+          <div className="flex items-center px-3 h-14 border-b border-sidebar-border shrink-0">
+            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain" />
           </div>
           <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
