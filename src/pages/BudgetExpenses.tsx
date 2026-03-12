@@ -582,10 +582,7 @@ function ExpenseDialog({ item, open, onOpenChange, onSave, onDelete, classes }: 
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Invoice/Receipt ref" value={form.invoiceRef} onChange={e => u({ invoiceRef: e.target.value })} />
-            <div><label className="text-xs font-medium text-muted-foreground">Payment Date</label><Input type="date" className="mt-1" value={form.paymentDate} onChange={e => u({ paymentDate: e.target.value })} /></div>
-          </div>
+          <Input placeholder="Invoice/Receipt ref" value={form.invoiceRef} onChange={e => u({ invoiceRef: e.target.value })} />
           <div className="flex items-center gap-3">
             <Switch checked={form.recurring} onCheckedChange={v => u({ recurring: v })} />
             <label className="text-xs font-medium text-muted-foreground">Recurring</label>
