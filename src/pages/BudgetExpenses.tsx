@@ -307,10 +307,11 @@ export default function BudgetExpenses() {
           <div className="bg-card rounded-lg nc-shadow-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b">
-                <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
-                <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
-                <th className="text-right p-3">Amount</th>
-                <th className="text-left p-3">Class</th>
+                 <th className="text-left p-3"><SortableHeader label="Description" active={expenseSort.sortKey === 'description'} direction={expenseSort.sortKey === 'description' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('description')} /></th>
+                 <th className="text-left p-3"><SortableHeader label="Supplier" active={expenseSort.sortKey === 'supplier'} direction={expenseSort.sortKey === 'supplier' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('supplier')} /></th>
+                 <th className="text-left p-3"><SortableHeader label="Category" active={expenseSort.sortKey === 'category'} direction={expenseSort.sortKey === 'category' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('category')} /></th>
+                 <th className="text-right p-3">Amount</th>
+                 <th className="text-left p-3">Class</th>
                 <th className="text-left p-3"><SortableHeader label="Status" active={expenseSort.sortKey === 'status'} direction={expenseSort.sortKey === 'status' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('status')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Phase" active={expenseSort.sortKey === 'phase'} direction={expenseSort.sortKey === 'phase' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('phase')} /></th>
                 <th className="text-left p-3"><SortableHeader label="Date" active={expenseSort.sortKey === 'paymentDate'} direction={expenseSort.sortKey === 'paymentDate' ? expenseSort.sortDir : null} onClick={() => expenseSort.toggle('paymentDate')} /></th>
