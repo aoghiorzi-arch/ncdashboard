@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/EmptyState';
-import { Plus, Trash2, Lightbulb, Download } from 'lucide-react';
+import { Plus, Trash2, Lightbulb, Download, Pencil, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES: Idea['category'][] = ['Class Idea', 'Feature', 'Marketing', 'Partnership', 'Event', 'Other'];
@@ -21,6 +21,7 @@ const statusBadge: Record<string, string> = {
 
 export default function IdeasBacklog() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [viewItem, setViewItem] = useState<Idea | null>(null);
   const [editItem, setEditItem] = useState<Idea | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -38,14 +39,14 @@ export default function IdeasBacklog() {
     if (editItem) { ideaCRUD.update({ ...item, updatedAt: now }); logActivity('updated', 'Ideas', item.title, user); }
     else { ideaCRUD.add({ ...item, id: generateId(), submittedBy: user, createdAt: now, updatedAt: now }); logActivity('created', 'Ideas', item.title, user); }
     setIdeas(ideaCRUD.getAll());
-    setEditItem(null); setNewOpen(false);
+    setEditItem(null); setNewOpen(false); setViewItem(null);
   };
 
   const handleDelete = (id: string) => {
     const item = ideas.find(i => i.id === id);
     ideaCRUD.remove(id);
     if (item) logActivity('deleted', 'Ideas', item.title, getSettings().userName);
-    setIdeas(ideaCRUD.getAll()); setEditItem(null);
+    setIdeas(ideaCRUD.getAll()); setEditItem(null); setViewItem(null);
   };
 
   const handleExport = () => exportToCSV(ideas, 'ideas', [
@@ -79,19 +80,19 @@ export default function IdeasBacklog() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sorted.map(idea => (
-            <div key={idea.id} onClick={() => setEditItem(idea)} className="bg-card rounded-lg p-4 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50">
+            <div key={idea.id} onClick={() => setViewItem(idea)} className="bg-card rounded-lg p-4 nc-shadow-card cursor-pointer hover:nc-shadow-elevated transition-shadow border border-border/50 flex flex-col">
               <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Lightbulb className="w-4 h-4 text-accent shrink-0" />
-                  <h4 className="text-sm font-semibold text-foreground">{idea.title}</h4>
+                  <h4 className="text-sm font-semibold text-foreground truncate">{idea.title}</h4>
                 </div>
-                <button onClick={e => { e.stopPropagation(); handleDelete(idea.id); }} className="text-muted-foreground hover:text-nc-alert"><Trash2 className="w-3.5 h-3.5" /></button>
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ml-2', statusBadge[idea.status])}>{idea.status}</span>
               </div>
-              {idea.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{idea.description}</p>}
-              <div className="flex items-center justify-between">
-                <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusBadge[idea.status])}>{idea.status}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground">{idea.category}</span>
+              {idea.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-4 flex-1">{idea.description}</p>}
+              <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
+                <span className="text-[10px] text-muted-foreground">{idea.category}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-muted-foreground">by {idea.submittedBy || '—'}</span>
                   <span className="text-[10px] font-bold text-accent">Score: {idea.impactScore * idea.effortScore}</span>
                 </div>
               </div>
@@ -100,6 +101,54 @@ export default function IdeasBacklog() {
         </div>
       )}
 
+      {/* View Dialog */}
+      <Dialog open={!!viewItem && !editItem} onOpenChange={o => { if (!o) setViewItem(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Lightbulb className="w-5 h-5 text-accent" />{viewItem?.title}</DialogTitle></DialogHeader>
+          {viewItem && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={cn('text-xs px-2.5 py-1 rounded-full font-medium', statusBadge[viewItem.status])}>{viewItem.status}</span>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{viewItem.category}</span>
+              </div>
+              {viewItem.description && (
+                <div>
+                  <h5 className="text-xs font-medium text-muted-foreground mb-1">Description</h5>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{viewItem.description}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <p className="text-[10px] text-muted-foreground">Impact</p>
+                  <p className="text-lg font-bold text-foreground">{viewItem.impactScore}</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <p className="text-[10px] text-muted-foreground">Effort</p>
+                  <p className="text-lg font-bold text-foreground">{viewItem.effortScore}</p>
+                </div>
+                <div className="bg-accent/10 rounded-lg p-2">
+                  <p className="text-[10px] text-muted-foreground">Score</p>
+                  <p className="text-lg font-bold text-accent">{viewItem.impactScore * viewItem.effortScore}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Submitted by {viewItem.submittedBy || '—'}</span>
+                <span>{viewItem.createdAt ? new Date(viewItem.createdAt).toLocaleDateString() : ''}</span>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setEditItem(viewItem)}>
+                  <Pencil className="w-4 h-4 mr-1" /> Edit
+                </Button>
+                <Button variant="destructive" onClick={() => handleDelete(viewItem.id)}>
+                  <Trash2 className="w-4 h-4 mr-1" /> Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit / New Dialog */}
       <IdeaDialog item={editItem} open={!!editItem || newOpen} onOpenChange={o => { if (!o) { setEditItem(null); setNewOpen(false); } }} onSave={handleSave} onDelete={handleDelete} />
     </div>
   );
@@ -120,7 +169,7 @@ function IdeaDialog({ item, open, onOpenChange, onSave, onDelete }: {
         <DialogHeader><DialogTitle>{item ? 'Edit Idea' : 'New Idea'}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Input placeholder="Idea title" value={form.title} onChange={e => u({ title: e.target.value })} autoFocus />
-          <Textarea placeholder="Description..." value={form.description} onChange={e => u({ description: e.target.value })} rows={3} />
+          <Textarea placeholder="Description..." value={form.description} onChange={e => u({ description: e.target.value })} rows={4} />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground">Category</label>

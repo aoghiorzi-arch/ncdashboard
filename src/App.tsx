@@ -24,6 +24,7 @@ import ChecklistsPage from "./pages/ChecklistsPage";
 import ForecastingPage from "./pages/ForecastingPage";
 import GanttPage from "./pages/GanttPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
+import MeetingNotes from "./pages/MeetingNotes";
 import StakeholderPortal from "./pages/StakeholderPortal";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/forecasting" element={<ForecastingPage />} />
             <Route path="/gantt" element={<GanttPage />} />
             <Route path="/workflows" element={<WorkflowsPage />} />
+            <Route path="/meeting-notes" element={<MeetingNotes />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/portal" element={<StakeholderPortal />} />

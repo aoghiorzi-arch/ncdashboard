@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
   FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
   BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink,
+  Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoBlack from '@/assets/logo-black.png';
@@ -37,6 +37,7 @@ const NAV_SECTIONS = [
       { title: 'Instructor CRM', path: '/instructors', icon: Users },
       { title: 'Documents', path: '/documents', icon: FolderOpen },
       { title: 'Ideas & Backlog', path: '/ideas', icon: Lightbulb },
+      { title: 'Meeting Notes', path: '/meeting-notes', icon: BookOpen },
       { title: 'Events', path: '/events', icon: PartyPopper },
       { title: 'Partnerships', path: '/partnerships', icon: Handshake },
     ],
