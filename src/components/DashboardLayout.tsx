@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
   FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
   BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink,
+  Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoBlack from '@/assets/logo-black.png';
