@@ -13,7 +13,8 @@ import { ChecklistWidget } from '@/components/ChecklistWidget';
 import { WelcomeBanner } from '@/components/WelcomeBanner';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
-  AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
+  AlertTriangle, Clock, Activity, TrendingDown, ArrowRight, RefreshCw,
+  ShieldAlert, Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
