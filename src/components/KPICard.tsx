@@ -57,8 +57,8 @@ export const KPICard = memo(function KPICard({
           </ResponsiveContainer>
         </div>
       )}
-      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 relative z-10">
-        <Icon className="w-5 h-5 text-accent" />
+      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 relative z-10 group-hover:bg-accent/10 transition-colors">
+        <Icon className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
       </div>
       <div className="min-w-0 relative z-10">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
