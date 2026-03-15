@@ -57,6 +57,13 @@ const NAV_SECTIONS = [
   },
 ];
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   return (
@@ -77,10 +84,10 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-colors',
+                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-all duration-200 relative',
                       active
-                        ? 'bg-sidebar-accent text-sidebar-primary'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-primary border-l-2 border-l-sidebar-primary ml-0 pl-3.5'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5'
                     )}
                     title={item.title}
                   >
