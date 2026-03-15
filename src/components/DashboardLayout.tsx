@@ -57,6 +57,13 @@ const NAV_SECTIONS = [
   },
 ];
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   return (
@@ -77,10 +84,10 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
-                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-colors',
+                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-all duration-200 relative',
                       active
-                        ? 'bg-sidebar-accent text-sidebar-primary'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-primary border-l-2 border-l-sidebar-primary ml-0 pl-3.5'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5'
                     )}
                     title={item.title}
                   >
@@ -151,7 +158,7 @@ export function DashboardLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-card border-b shrink-0">
+        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-card border-b shrink-0 sticky top-0 z-30 backdrop-blur-sm bg-card/95 shadow-[0_1px_3px_0_hsl(var(--border)/0.3)]">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
@@ -159,7 +166,12 @@ export function DashboardLayout() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="font-semibold text-lg text-foreground truncate">{currentModule}</h2>
+            <div>
+              <h2 className="font-semibold text-lg text-foreground truncate leading-tight">{currentModule}</h2>
+              {currentModule === 'Dashboard' && (
+                <p className="text-[10px] text-muted-foreground leading-tight">{getGreeting()} 👋</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button

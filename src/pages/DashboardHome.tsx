@@ -13,7 +13,8 @@ import { ChecklistWidget } from '@/components/ChecklistWidget';
 import { WelcomeBanner } from '@/components/WelcomeBanner';
 import {
   Film, Clapperboard, CheckSquare, CalendarClock, Users, PiggyBank,
-  AlertTriangle, Clock, Activity, TrendingDown, ArrowRight,
+  AlertTriangle, Clock, Activity, TrendingDown, ArrowRight, RefreshCw,
+  ShieldAlert, Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -66,17 +67,23 @@ function buildBurndownData() {
 export default function DashboardHome() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState(getSettings());
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const doRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTasks(getTasks());
+    setSettings(getSettings());
+    setLastRefreshed(new Date());
+    setTimeout(() => setRefreshing(false), 500);
+  }, []);
 
   useEffect(() => {
-    const refresh = () => {
-      setTasks(getTasks());
-      setSettings(getSettings());
-    };
-    refresh();
+    doRefresh();
     generateRecurringTasks();
-    window.addEventListener('nc-data-change', refresh);
-    return () => window.removeEventListener('nc-data-change', refresh);
-  }, []);
+    window.addEventListener('nc-data-change', doRefresh);
+    return () => window.removeEventListener('nc-data-change', doRefresh);
+  }, [doRefresh]);
 
   const widgets = useMemo(() => {
     const w = settings.dashboardWidgets?.length ? settings.dashboardWidgets : DEFAULT_WIDGETS;
@@ -335,6 +342,106 @@ export default function DashboardHome() {
     ),
 
     checklists: <ChecklistWidget key="checklists" />,
+
+    riskRegister: (() => {
+      const risks = [
+        ...overdueTasks.map(t => ({ id: t.id, title: t.title, severity: 'high' as const, type: 'Overdue', days: Math.abs(daysUntil(t.dueDate)) })),
+        ...tasks.filter(t => t.status === 'Blocked').map(t => ({ id: t.id, title: t.title, severity: 'critical' as const, type: 'Blocked', days: 0 })),
+        ...tasks.filter(t => t.priority === 'Critical' && t.status !== 'Complete').map(t => ({ id: t.id, title: t.title, severity: 'medium' as const, type: 'Critical Priority', days: t.dueDate ? daysUntil(t.dueDate) : 0 })),
+      ];
+      const unique = risks.filter((r, i, arr) => arr.findIndex(x => x.id === r.id) === i);
+      return (
+        <div key="riskRegister" className="bg-card rounded-lg nc-shadow-card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
+              <ShieldAlert className="w-4 h-4 text-destructive" />
+              Risk Register
+            </h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">
+              {unique.length} item{unique.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {unique.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No risks identified — all clear! ✅</p>
+          ) : (
+            <ul className="space-y-2">
+              {unique.slice(0, 8).map(risk => (
+                <li key={risk.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn('w-2 h-2 rounded-full shrink-0',
+                      risk.severity === 'critical' ? 'bg-destructive' : risk.severity === 'high' ? 'bg-nc-warn' : 'bg-accent'
+                    )} />
+                    <span className="text-xs sm:text-sm font-medium text-foreground truncate">{risk.title}</span>
+                  </div>
+                  <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ml-2',
+                    risk.severity === 'critical' ? 'bg-destructive/10 text-destructive' : risk.severity === 'high' ? 'bg-nc-warn/10 text-nc-warn' : 'bg-accent/10 text-accent'
+                  )}>
+                    {risk.type}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      );
+    })(),
+
+    upcomingDeadlines: (() => {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const next7 = new Date(now);
+      next7.setDate(next7.getDate() + 7);
+      const next7Str = next7.toISOString().split('T')[0];
+      const upcoming = tasks
+        .filter(t => t.status !== 'Complete' && t.dueDate && t.dueDate >= todayStr && t.dueDate <= next7Str)
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+      const grouped: Record<string, Task[]> = {};
+      upcoming.forEach(t => {
+        const label = t.dueDate === todayStr ? 'Today' :
+          t.dueDate === new Date(now.getTime() + 86400000).toISOString().split('T')[0] ? 'Tomorrow' :
+          new Date(t.dueDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        if (!grouped[label]) grouped[label] = [];
+        grouped[label].push(t);
+      });
+
+      return (
+        <div key="upcomingDeadlines" className="bg-card rounded-lg nc-shadow-card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 text-accent" />
+              Upcoming Deadlines
+            </h3>
+            <Link to="/tasks">
+              <Button variant="ghost" size="sm" className="text-xs">
+                View all <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No deadlines in the next 7 days.</p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(grouped).map(([day, dayTasks]) => (
+                <div key={day}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{day}</p>
+                  <ul className="space-y-1">
+                    {dayTasks.map(t => (
+                      <li key={t.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-muted/50">
+                        <span className="text-xs sm:text-sm font-medium text-foreground truncate">{t.title}</span>
+                        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ml-2', priorityColor[t.priority])}>
+                          {t.priority}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    })(),
   };
 
   // Grouped widgets that render together
@@ -372,23 +479,27 @@ export default function DashboardHome() {
           rendered.add('milestones');
           rendered.add('statusReport');
         }
-      } else if (['agenda', 'alerts'].includes(id)) {
-        if (!rendered.has('agenda') && !rendered.has('alerts')) {
-          const visibleInGroup = ['agenda', 'alerts'].filter(isVisible);
+      } else if (['agenda', 'alerts', 'riskRegister'].includes(id)) {
+        if (!rendered.has('agenda') && !rendered.has('alerts') && !rendered.has('riskRegister')) {
+          const visibleInGroup = ['agenda', 'alerts', 'riskRegister'].filter(isVisible);
           if (visibleInGroup.length > 0) {
             sections.push(
-              <div key="agendaRow" className={cn('grid gap-4 sm:gap-6', visibleInGroup.length > 1 ? 'grid-cols-1 lg:grid-cols-3' : '')}>
-                {visibleInGroup.includes('agenda') && <div className="lg:col-span-2">{widgetComponents.agenda}</div>}
+              <div key="agendaRow" className={cn('grid gap-4 sm:gap-6', 
+                visibleInGroup.length >= 3 ? 'grid-cols-1 lg:grid-cols-3' :
+                visibleInGroup.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : '')}>
+                {visibleInGroup.includes('agenda') && <div className={visibleInGroup.length >= 3 ? '' : 'lg:col-span-1'}>{widgetComponents.agenda}</div>}
                 {visibleInGroup.includes('alerts') && widgetComponents.alerts}
+                {visibleInGroup.includes('riskRegister') && widgetComponents.riskRegister}
               </div>
             );
           }
           rendered.add('agenda');
           rendered.add('alerts');
+          rendered.add('riskRegister');
         }
-      } else if (['recentTasks', 'activityFeed', 'checklists'].includes(id)) {
-        if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists')) {
-          const visibleInGroup = ['recentTasks', 'activityFeed', 'checklists'].filter(isVisible);
+      } else if (['recentTasks', 'activityFeed', 'checklists', 'upcomingDeadlines'].includes(id)) {
+        if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists') && !rendered.has('upcomingDeadlines')) {
+          const visibleInGroup = ['upcomingDeadlines', 'recentTasks', 'activityFeed', 'checklists'].filter(isVisible);
           if (visibleInGroup.length > 0) {
             sections.push(
               <div key="bottomRow" className={cn('grid gap-4 sm:gap-6', 
@@ -401,6 +512,7 @@ export default function DashboardHome() {
           rendered.add('recentTasks');
           rendered.add('activityFeed');
           rendered.add('checklists');
+          rendered.add('upcomingDeadlines');
         }
       } else {
         sections.push(renderWidget(id));
@@ -420,6 +532,16 @@ export default function DashboardHome() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-base sm:text-lg font-semibold text-foreground">Dashboard Overview</h2>
         <div className="flex items-center gap-2">
+          <button
+            onClick={doRefresh}
+            className={cn('p-1.5 rounded-md hover:bg-muted transition-all text-muted-foreground', refreshing && 'animate-spin')}
+            title="Refresh data"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">
+            Updated {lastRefreshed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </span>
           {!isViewer && <WidgetCustomizer />}
           <StatusReportPDFButton />
         </div>
