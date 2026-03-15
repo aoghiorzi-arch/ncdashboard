@@ -158,7 +158,7 @@ export function DashboardLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-card border-b shrink-0">
+        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-card border-b shrink-0 sticky top-0 z-30 backdrop-blur-sm bg-card/95 shadow-[0_1px_3px_0_hsl(var(--border)/0.3)]">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
@@ -166,7 +166,12 @@ export function DashboardLayout() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="font-semibold text-lg text-foreground truncate">{currentModule}</h2>
+            <div>
+              <h2 className="font-semibold text-lg text-foreground truncate leading-tight">{currentModule}</h2>
+              {currentModule === 'Dashboard' && (
+                <p className="text-[10px] text-muted-foreground leading-tight">{getGreeting()} 👋</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button
