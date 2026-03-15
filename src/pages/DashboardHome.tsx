@@ -479,7 +479,7 @@ export default function DashboardHome() {
           rendered.add('milestones');
           rendered.add('statusReport');
         }
-      } else if (['agenda', 'alerts'].includes(id)) {
+      } else if (['agenda', 'alerts', 'riskRegister'].includes(id)) {
         if (!rendered.has('agenda') && !rendered.has('alerts') && !rendered.has('riskRegister')) {
           const visibleInGroup = ['agenda', 'alerts', 'riskRegister'].filter(isVisible);
           if (visibleInGroup.length > 0) {
