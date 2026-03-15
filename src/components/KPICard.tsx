@@ -35,7 +35,7 @@ export const KPICard = memo(function KPICard({
 
   return (
     <div className={cn(
-      'bg-card rounded-lg p-5 nc-shadow-card border-l-4 flex items-start gap-4 relative overflow-hidden',
+      'bg-card rounded-lg p-5 nc-shadow-card border-l-4 flex items-start gap-4 relative overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-default group',
       variantStyles[variant]
     )}>
       {/* Sparkline background */}
