@@ -67,17 +67,23 @@ function buildBurndownData() {
 export default function DashboardHome() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState(getSettings());
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const doRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTasks(getTasks());
+    setSettings(getSettings());
+    setLastRefreshed(new Date());
+    setTimeout(() => setRefreshing(false), 500);
+  }, []);
 
   useEffect(() => {
-    const refresh = () => {
-      setTasks(getTasks());
-      setSettings(getSettings());
-    };
-    refresh();
+    doRefresh();
     generateRecurringTasks();
-    window.addEventListener('nc-data-change', refresh);
-    return () => window.removeEventListener('nc-data-change', refresh);
-  }, []);
+    window.addEventListener('nc-data-change', doRefresh);
+    return () => window.removeEventListener('nc-data-change', doRefresh);
+  }, [doRefresh]);
 
   const widgets = useMemo(() => {
     const w = settings.dashboardWidgets?.length ? settings.dashboardWidgets : DEFAULT_WIDGETS;
