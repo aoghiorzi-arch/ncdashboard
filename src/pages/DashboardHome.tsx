@@ -497,9 +497,9 @@ export default function DashboardHome() {
           rendered.add('alerts');
           rendered.add('riskRegister');
         }
-      } else if (['recentTasks', 'activityFeed', 'checklists'].includes(id)) {
-        if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists')) {
-          const visibleInGroup = ['recentTasks', 'activityFeed', 'checklists'].filter(isVisible);
+      } else if (['recentTasks', 'activityFeed', 'checklists', 'upcomingDeadlines'].includes(id)) {
+        if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists') && !rendered.has('upcomingDeadlines')) {
+          const visibleInGroup = ['upcomingDeadlines', 'recentTasks', 'activityFeed', 'checklists'].filter(isVisible);
           if (visibleInGroup.length > 0) {
             sections.push(
               <div key="bottomRow" className={cn('grid gap-4 sm:gap-6', 
@@ -512,6 +512,7 @@ export default function DashboardHome() {
           rendered.add('recentTasks');
           rendered.add('activityFeed');
           rendered.add('checklists');
+          rendered.add('upcomingDeadlines');
         }
       } else {
         sections.push(renderWidget(id));
