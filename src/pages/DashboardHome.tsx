@@ -480,18 +480,22 @@ export default function DashboardHome() {
           rendered.add('statusReport');
         }
       } else if (['agenda', 'alerts'].includes(id)) {
-        if (!rendered.has('agenda') && !rendered.has('alerts')) {
-          const visibleInGroup = ['agenda', 'alerts'].filter(isVisible);
+        if (!rendered.has('agenda') && !rendered.has('alerts') && !rendered.has('riskRegister')) {
+          const visibleInGroup = ['agenda', 'alerts', 'riskRegister'].filter(isVisible);
           if (visibleInGroup.length > 0) {
             sections.push(
-              <div key="agendaRow" className={cn('grid gap-4 sm:gap-6', visibleInGroup.length > 1 ? 'grid-cols-1 lg:grid-cols-3' : '')}>
-                {visibleInGroup.includes('agenda') && <div className="lg:col-span-2">{widgetComponents.agenda}</div>}
+              <div key="agendaRow" className={cn('grid gap-4 sm:gap-6', 
+                visibleInGroup.length >= 3 ? 'grid-cols-1 lg:grid-cols-3' :
+                visibleInGroup.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : '')}>
+                {visibleInGroup.includes('agenda') && <div className={visibleInGroup.length >= 3 ? '' : 'lg:col-span-1'}>{widgetComponents.agenda}</div>}
                 {visibleInGroup.includes('alerts') && widgetComponents.alerts}
+                {visibleInGroup.includes('riskRegister') && widgetComponents.riskRegister}
               </div>
             );
           }
           rendered.add('agenda');
           rendered.add('alerts');
+          rendered.add('riskRegister');
         }
       } else if (['recentTasks', 'activityFeed', 'checklists'].includes(id)) {
         if (!rendered.has('recentTasks') && !rendered.has('activityFeed') && !rendered.has('checklists')) {
