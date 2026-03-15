@@ -342,6 +342,106 @@ export default function DashboardHome() {
     ),
 
     checklists: <ChecklistWidget key="checklists" />,
+
+    riskRegister: (() => {
+      const risks = [
+        ...overdueTasks.map(t => ({ id: t.id, title: t.title, severity: 'high' as const, type: 'Overdue', days: Math.abs(daysUntil(t.dueDate)) })),
+        ...tasks.filter(t => t.status === 'Blocked').map(t => ({ id: t.id, title: t.title, severity: 'critical' as const, type: 'Blocked', days: 0 })),
+        ...tasks.filter(t => t.priority === 'Critical' && t.status !== 'Complete').map(t => ({ id: t.id, title: t.title, severity: 'medium' as const, type: 'Critical Priority', days: t.dueDate ? daysUntil(t.dueDate) : 0 })),
+      ];
+      const unique = risks.filter((r, i, arr) => arr.findIndex(x => x.id === r.id) === i);
+      return (
+        <div key="riskRegister" className="bg-card rounded-lg nc-shadow-card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
+              <ShieldAlert className="w-4 h-4 text-destructive" />
+              Risk Register
+            </h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">
+              {unique.length} item{unique.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {unique.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No risks identified — all clear! ✅</p>
+          ) : (
+            <ul className="space-y-2">
+              {unique.slice(0, 8).map(risk => (
+                <li key={risk.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn('w-2 h-2 rounded-full shrink-0',
+                      risk.severity === 'critical' ? 'bg-destructive' : risk.severity === 'high' ? 'bg-nc-warn' : 'bg-accent'
+                    )} />
+                    <span className="text-xs sm:text-sm font-medium text-foreground truncate">{risk.title}</span>
+                  </div>
+                  <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ml-2',
+                    risk.severity === 'critical' ? 'bg-destructive/10 text-destructive' : risk.severity === 'high' ? 'bg-nc-warn/10 text-nc-warn' : 'bg-accent/10 text-accent'
+                  )}>
+                    {risk.type}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      );
+    })(),
+
+    upcomingDeadlines: (() => {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const next7 = new Date(now);
+      next7.setDate(next7.getDate() + 7);
+      const next7Str = next7.toISOString().split('T')[0];
+      const upcoming = tasks
+        .filter(t => t.status !== 'Complete' && t.dueDate && t.dueDate >= todayStr && t.dueDate <= next7Str)
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+      const grouped: Record<string, Task[]> = {};
+      upcoming.forEach(t => {
+        const label = t.dueDate === todayStr ? 'Today' :
+          t.dueDate === new Date(now.getTime() + 86400000).toISOString().split('T')[0] ? 'Tomorrow' :
+          new Date(t.dueDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        if (!grouped[label]) grouped[label] = [];
+        grouped[label].push(t);
+      });
+
+      return (
+        <div key="upcomingDeadlines" className="bg-card rounded-lg nc-shadow-card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 text-accent" />
+              Upcoming Deadlines
+            </h3>
+            <Link to="/tasks">
+              <Button variant="ghost" size="sm" className="text-xs">
+                View all <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No deadlines in the next 7 days.</p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(grouped).map(([day, dayTasks]) => (
+                <div key={day}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{day}</p>
+                  <ul className="space-y-1">
+                    {dayTasks.map(t => (
+                      <li key={t.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-muted/50">
+                        <span className="text-xs sm:text-sm font-medium text-foreground truncate">{t.title}</span>
+                        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ml-2', priorityColor[t.priority])}>
+                          {t.priority}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    })(),
   };
 
   // Grouped widgets that render together
