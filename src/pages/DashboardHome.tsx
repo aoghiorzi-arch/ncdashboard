@@ -527,6 +527,16 @@ export default function DashboardHome() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-base sm:text-lg font-semibold text-foreground">Dashboard Overview</h2>
         <div className="flex items-center gap-2">
+          <button
+            onClick={doRefresh}
+            className={cn('p-1.5 rounded-md hover:bg-muted transition-all text-muted-foreground', refreshing && 'animate-spin')}
+            title="Refresh data"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">
+            Updated {lastRefreshed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </span>
           {!isViewer && <WidgetCustomizer />}
           <StatusReportPDFButton />
         </div>
