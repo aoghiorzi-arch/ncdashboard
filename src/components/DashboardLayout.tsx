@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, CalendarDays, CheckSquare, Film, Users,
-  FolderOpen, Lightbulb, PartyPopper, Handshake, PiggyBank,
-  BarChart3, Shield, UserCog, Settings, ChevronLeft, ChevronRight,
-  Search, Plus, Menu, X, History, ClipboardList, TrendingUp, Zap, ExternalLink, BookOpen,
+  Kanban, ListChecks, Timer, CalendarDays, Images,
+  BarChart3, Users, Settings, ChevronLeft, ChevronRight,
+  Search, Plus, Menu, TrendingUp, ExternalLink, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import logoBlack from '@/assets/logo-black.png';
-import logoWhite from '@/assets/logo-white.png';
 import { QuickAddDialog } from './QuickAddDialog';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsPanel } from './NotificationsPanel';
@@ -16,62 +13,51 @@ import { AnimatedPage } from './AnimatedPage';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { DashboardHelp } from './DashboardHelp';
 import { Breadcrumbs } from './Breadcrumbs';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NAV_SECTIONS = [
   {
-    label: 'Overview',
+    label: 'Sprint',
     items: [
-      { title: 'Dashboard', path: '/', icon: LayoutDashboard },
-      { title: 'Calendar', path: '/calendar', icon: CalendarDays },
+      { title: 'Sprint Board', path: '/sprint', icon: Kanban },
+      { title: 'Marketing Backlog', path: '/backlog', icon: ListChecks },
+      { title: 'Sprint Manager', path: '/sprints', icon: Timer },
     ],
   },
   {
-    label: 'Operations',
+    label: 'Content',
     items: [
-      { title: 'Tasks', path: '/tasks', icon: CheckSquare },
-      { title: 'Gantt Chart', path: '/gantt', icon: CalendarDays },
-      { title: 'Checklists', path: '/checklists', icon: ClipboardList },
-      { title: 'Workflows', path: '/workflows', icon: Zap },
-      { title: 'Classes Pipeline', path: '/classes', icon: Film },
-      { title: 'Instructor CRM', path: '/instructors', icon: Users },
-      { title: 'Documents', path: '/documents', icon: FolderOpen },
-      { title: 'Ideas & Backlog', path: '/ideas', icon: Lightbulb },
-      { title: 'Meeting Notes', path: '/meeting-notes', icon: BookOpen },
-      { title: 'Events', path: '/events', icon: PartyPopper },
-      { title: 'Partnerships', path: '/partnerships', icon: Handshake },
+      { title: 'Content Calendar', path: '/calendar', icon: CalendarDays },
+      { title: 'Asset Gallery', path: '/assets', icon: Images },
     ],
   },
   {
-    label: 'Administration',
+    label: 'Analytics',
     items: [
-      { title: 'Budget & Expenses', path: '/budget', icon: PiggyBank },
-      { title: 'Platform Metrics', path: '/metrics', icon: BarChart3 },
-      { title: 'Forecasting', path: '/forecasting', icon: TrendingUp },
-      { title: 'Legal & Compliance', path: '/legal', icon: Shield },
-      { title: 'Team & Roles', path: '/team', icon: UserCog },
-      { title: 'Audit Trail', path: '/audit', icon: History },
-      { title: 'Settings', path: '/settings', icon: Settings },
+      { title: 'Campaign Pulse', path: '/campaign-pulse', icon: BarChart3 },
+      { title: 'Velocity Charts', path: '/metrics', icon: TrendingUp },
+    ],
+  },
+  {
+    label: 'Team',
+    items: [
       { title: 'Stakeholder Portal', path: '/portal', icon: ExternalLink },
+      { title: 'Team & Roles', path: '/team', icon: Users },
+      { title: 'Automations', path: '/workflows', icon: Zap },
+      { title: 'Settings', path: '/settings', icon: Settings },
     ],
   },
 ];
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   return (
-    <nav className="flex-1 overflow-y-auto py-1 space-y-1">
+    <nav className="flex-1 overflow-y-auto py-2 space-y-0.5">
       {NAV_SECTIONS.map(section => (
-        <div key={section.label}>
+        <div key={section.label} className="mb-1">
           {!collapsed && (
-            <p className="px-4 mb-0.5 mt-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+            <p className="px-4 mb-1 mt-3 text-[9px] font-bold uppercase tracking-widest text-sidebar-foreground/40">
               {section.label}
             </p>
           )}
@@ -83,15 +69,15 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                   <Link
                     to={item.path}
                     onClick={onNavigate}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-1.5 text-[12px] font-medium rounded-md mx-1 transition-all duration-200 relative',
-                      active
-                        ? 'bg-sidebar-accent text-sidebar-primary border-l-2 border-l-sidebar-primary ml-0 pl-3.5'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5'
-                    )}
                     title={item.title}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 text-[12px] font-medium rounded-lg mx-2 transition-all duration-150',
+                      active
+                        ? 'bg-sidebar-primary/20 text-sidebar-primary border-l-2 border-sidebar-primary pl-2.5'
+                        : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                    )}
                   >
-                    <item.icon className="w-4 h-4 shrink-0" />
+                    <item.icon className={cn('w-4 h-4 shrink-0', active && 'text-sidebar-primary')} />
                     {!collapsed && <span className="truncate">{item.title}</span>}
                   </Link>
                 </li>
@@ -104,11 +90,28 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   );
 }
 
+function LogoMark({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5 px-4 h-14 border-b border-sidebar-border shrink-0">
+      <div className="w-7 h-7 rounded-lg av-gradient-primary flex items-center justify-center shrink-0">
+        <Zap className="w-4 h-4 text-white" />
+      </div>
+      {!collapsed && (
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold text-sidebar-foreground leading-tight truncate">Agile Velocity</p>
+          <p className="text-[9px] text-sidebar-foreground/40 leading-tight tracking-wide">MARKETING OPS</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handler = () => setQuickAddOpen(true);
@@ -118,74 +121,74 @@ export function DashboardLayout() {
 
   const currentModule = NAV_SECTIONS
     .flatMap(s => s.items)
-    .find(i => i.path === location.pathname)?.title || 'Dashboard';
+    .find(i => i.path === location.pathname)?.title ?? 'Dashboard';
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden md:flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 flex-shrink-0',
+          'hidden md:flex flex-col av-gradient-sidebar text-sidebar-foreground transition-all duration-300 flex-shrink-0',
           collapsed ? 'w-14' : 'w-60'
         )}
       >
-        <div className="flex items-center px-3 h-14 border-b border-sidebar-border shrink-0">
-          {collapsed ? (
-            <div className="w-8 h-8 rounded nc-gradient-gold flex items-center justify-center text-xs font-bold text-primary shrink-0">NC</div>
-          ) : (
-            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain" />
-          )}
-        </div>
+        <LogoMark collapsed={collapsed} />
         <SidebarNav collapsed={collapsed} />
+        {/* User chip */}
+        {!collapsed && user && (
+          <div className="px-3 pb-3">
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-sidebar-accent/40">
+              <div className="w-7 h-7 rounded-full av-gradient-primary flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                {user.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-sidebar-foreground truncate">{user.name}</p>
+                <p className="text-[9px] text-sidebar-foreground/50 capitalize">{user.role}</p>
+              </div>
+            </div>
+          </div>
+        )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center h-10 border-t border-sidebar-border text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+          className="flex items-center justify-center h-9 border-t border-sidebar-border text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </aside>
 
-      {/* Mobile Sidebar (Sheet) */}
+      {/* Mobile Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
-          <div className="flex items-center px-3 h-14 border-b border-sidebar-border shrink-0">
-            <img src={logoWhite} alt="Newbold Connect" className="h-8 object-contain" />
-          </div>
+        <SheetContent side="left" className="w-64 p-0 av-gradient-sidebar text-sidebar-foreground border-sidebar-border">
+          <LogoMark collapsed={false} />
           <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="h-14 flex items-center justify-between px-4 sm:px-6 bg-card border-b shrink-0 sticky top-0 z-30 backdrop-blur-sm bg-card/95 shadow-[0_1px_3px_0_hsl(var(--border)/0.3)]">
+        {/* Top bar — glassmorphism */}
+        <header className="h-14 flex items-center justify-between px-4 sm:px-6 av-glass border-b border-border/60 shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div>
-              <h2 className="font-semibold text-lg text-foreground truncate leading-tight">{currentModule}</h2>
-              {currentModule === 'Dashboard' && (
-                <p className="text-[10px] text-muted-foreground leading-tight">{getGreeting()} 👋</p>
-              )}
-            </div>
+            <h2 className="font-bold text-base text-foreground truncate">{currentModule}</h2>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => window.dispatchEvent(new Event('nc-open-search'))}
-              className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground flex items-center gap-2"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/80 transition-colors text-muted-foreground text-sm"
             >
               <Search className="w-4 h-4" />
-              <span className="text-xs hidden sm:inline text-muted-foreground">⌘K</span>
+              <span className="hidden sm:inline text-xs">⌘K</span>
             </button>
             <NotificationsPanel />
           </div>
         </header>
 
-        {/* Content with animation */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Breadcrumbs />
           <AnimatedPage>
@@ -197,7 +200,7 @@ export function DashboardLayout() {
       {/* Quick-Add FAB */}
       <button
         onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full nc-gradient-gold nc-shadow-elevated flex items-center justify-center text-primary hover:scale-105 transition-transform z-50"
+        className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full av-gradient-primary av-shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform z-50"
       >
         <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
